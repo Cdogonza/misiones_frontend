@@ -1,0 +1,302 @@
+// Paleta basada en el logo institucional
+// Azul rey dominante, dorado de los banners, blanco del escudo
+
+$primary: #1a3a8f; // Azul rey del escudo
+$primary-hover: #122d75; // Azul más oscuro para hover
+$accent: #f5c518; // Dorado de los banners
+$glass-bg: rgba(255, 255, 255, 0.08);
+$glass-border: rgba(255, 255, 255, 0.18);
+$text: #ffffff;
+$text-muted: rgba(255, 255, 255, 0.60);
+$error-color: #f87171;
+
+.login-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  // Fondo: degradado que evoca los colores del escudo
+  background: linear-gradient(150deg, #0b1e50 0%, #1a3a8f 45%, #0d2266 100%);
+  padding: 24px;
+  font-family: 'Inter', sans-serif;
+  position: relative;
+  overflow: hidden;
+
+  // Destellos decorativos que evocan los rayos del logo
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 0.12;
+  }
+
+  &::before {
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, $accent 0%, transparent 70%);
+    top: -200px;
+    right: -200px;
+  }
+
+  &::after {
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, lighten(#1a3a8f, 30%) 0%, transparent 70%);
+    bottom: -150px;
+    left: -100px;
+  }
+}
+
+.login-card {
+  position: relative;
+  z-index: 1;
+  background: $glass-bg;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid $glass-border;
+  border-radius: 24px;
+  padding: 40px 40px 44px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow:
+    0 30px 60px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.06) inset;
+  animation: fadeInUp 0.5s ease both;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Header / Logo */
+.login-header {
+  text-align: center;
+  margin-bottom: 32px;
+
+  .logo-img {
+    width: 100px;
+    height: 100px;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto 18px;
+    border-radius: 8px;
+    filter: drop-shadow(0 4px 16px rgba(245, 197, 24, 0.35));
+    animation: logoFloat 4s ease-in-out infinite;
+  }
+
+  h1 {
+    color: $text;
+    font-size: 1.55rem;
+    font-weight: 700;
+    margin: 0 0 6px;
+    letter-spacing: -0.3px;
+  }
+
+  .subtitle {
+    color: $text-muted;
+    font-size: 0.875rem;
+    margin: 0;
+    font-weight: 400;
+  }
+}
+
+@keyframes logoFloat {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+/* Separador dorado */
+.login-header::after {
+  content: '';
+  display: block;
+  width: 48px;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, $accent, transparent);
+  border-radius: 2px;
+  margin: 16px auto 0;
+}
+
+/* Fields */
+.field-group {
+  margin-bottom: 20px;
+
+  label {
+    display: block;
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 8px;
+    letter-spacing: 0.3px;
+  }
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+
+  .input-icon {
+    position: absolute;
+    left: 14px;
+    font-size: 1rem;
+    pointer-events: none;
+    opacity: 0.65;
+  }
+
+  input {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 12px;
+    padding: 13px 44px 13px 42px;
+    color: $text;
+    font-size: 0.95rem;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    transition: border-color 0.25s, box-shadow 0.25s, background 0.25s;
+    box-sizing: border-box;
+
+    &::placeholder {
+      color: rgba(255, 255, 255, 0.28);
+    }
+
+    &:focus {
+      border-color: $accent;
+      background: rgba(245, 197, 24, 0.06);
+      box-shadow: 0 0 0 3px rgba(245, 197, 24, 0.18);
+    }
+  }
+
+  .toggle-pass {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 4px;
+    opacity: 0.55;
+    transition: opacity 0.2s;
+    line-height: 1;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+}
+
+.has-error .input-wrapper input {
+  border-color: $error-color;
+  box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.14);
+}
+
+.field-error {
+  display: block;
+  color: $error-color;
+  font-size: 0.8rem;
+  margin-top: 6px;
+  padding-left: 4px;
+}
+
+/* Error banner */
+.error-banner {
+  background: rgba(248, 113, 113, 0.10);
+  border: 1px solid rgba(248, 113, 113, 0.32);
+  border-radius: 10px;
+  color: $error-color;
+  font-size: 0.875rem;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: shake 0.4s ease;
+}
+
+@keyframes shake {
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  25% {
+    transform: translateX(-6px);
+  }
+
+  75% {
+    transform: translateX(6px);
+  }
+}
+
+/* Submit button — azul rey con borde dorado */
+.btn-submit {
+  width: 100%;
+  background: linear-gradient(135deg, $primary, $primary-hover);
+  border: 2px solid $accent;
+  border-radius: 12px;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  padding: 13px;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s, border-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 4px 20px rgba(245, 197, 24, 0.2);
+  letter-spacing: 0.3px;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(245, 197, 24, 0.35);
+    
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+}
+
+/* Spinner */
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: $accent;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -1,0 +1,137 @@
+<div class="page-wrapper">
+    <div class="edit-container animate-fade-in">
+        @if (loading) {
+        <div class="loader">
+            <div class="spinner"></div>
+            <p>Cargando información del registro...</p>
+        </div>
+        } @else {
+        <div class="edit-header">
+            <h2>{{ id === 0 ? 'Crear' : 'Editar' }} {{ type | titlecase }}</h2>
+            @if (id !== 0) {
+            <span class="badge">ID: {{ id }}</span>
+            }
+        </div>
+
+        <form class="edit-form" (submit)="$event.preventDefault()">
+
+            <!-- Campos para EQUIPO -->
+            @if (type === 'equipo') {
+            <div class="form-group full-width autocomplete-container">
+                <label>Nombre del Equipo</label>
+                <input type="text" [(ngModel)]="equipo.equipo" name="equipo_name" 
+                       placeholder="Ej: Monitor LED 24'" (input)="onEquipoNameInput()" autocomplete="off">
+                
+                @if (filteredEquipoNames.length > 0) {
+                <ul class="suggestions-list">
+                    @for (name of filteredEquipoNames; track name) {
+                    <li (click)="selectEquipoName(name)">{{ name }}</li>
+                    }
+                </ul>
+                }
+            </div>
+            }
+
+            <!-- Campos para COMPONENTE -->
+            @if (type === 'componente') {
+            <div class="form-group autocomplete-container">
+                <label>Nombre del Componente</label>
+                <input type="text" [(ngModel)]="componente.componente" name="comp_name" 
+                       placeholder="Nombre completo" (input)="onNameInput()" autocomplete="off">
+                
+                @if (filteredNames.length > 0) {
+                <ul class="suggestions-list">
+                    @for (name of filteredNames; track name) {
+                    <li (click)="selectName(name)">{{ name }}</li>
+                    }
+                </ul>
+                }
+            </div>
+            <div class="form-group">
+                <label>Número de Serie</label>
+                <input type="text" [(ngModel)]="componente.serie" name="comp_serie" placeholder="S/N o Lote">
+            </div>
+            <div class="form-group">
+                <label>Unidad Asociada</label>
+                <select [(ngModel)]="componente.codigo_unidad" name="comp_unidad">
+                    <option [ngValue]="null">Seleccione una unidad...</option>
+                    @for (u of unidades; track u.codigo_unidad) {
+                    <option [ngValue]="u.codigo_unidad">{{ u.nombre_de_la_unidad }}</option>
+                    }
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Equipo Asociado</label>
+                <select [(ngModel)]="componente.codigo_equipo" name="comp_equipo">
+                    <option [ngValue]="null">Seleccione un equipo...</option>
+                    @for (e of equipos; track e.codigo_equipo) {
+                    <option [ngValue]="e.codigo_equipo">{{ e.equipo }}</option>
+                    }
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Estado Técnico</label>
+                <select [(ngModel)]="componente.estado" name="comp_estado">
+                    <option value="Bueno">Funcional / Bueno</option>
+                    <option value="Regular">Regular</option>
+                    <option value="Malo">Falla / Malo</option>
+                    <option value="En Reparación">En Reparación</option>
+                    <option value="DEPOSITO">En Depósito</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Ubicación</label>
+                <input type="text" [(ngModel)]="componente.ubicacion" name="comp_ubic" placeholder="Ej: Piso 1, Oficina 2">
+            </div>
+            <div class="form-group">
+                <label>Nro Alta</label>
+                <input type="text" [(ngModel)]="componente.Nro_alta" name="comp_alta" placeholder="Patrimonio">
+            </div>
+            <div class="form-group">
+                <label>Clasificación</label>
+                <input type="text" [(ngModel)]="componente.clasificacion" name="comp_clasif" placeholder="Categoría">
+            </div>
+            <div class="form-group full-width">
+                <label>Observación Detallada</label>
+                <textarea [(ngModel)]="componente.observacion" name="comp_obs" placeholder="Notas adicionales..."></textarea>
+            </div>
+            }
+
+            <!-- Campos para UNIDAD -->
+            @if (type === 'unidad') {
+            <div class="form-group">
+                <label>UNIDAD</label>
+                <input type="text" [(ngModel)]="unidad.unidad" name="uni_code" placeholder="UNIDAD">
+            </div>
+            <div class="form-group">
+                <label>NOMBRE</label>
+                <input type="text" [(ngModel)]="unidad .nombre_de_la_unidad" name="uni_name" placeholder="Nombre completo">
+            </div>
+            <div class="form-group full-width autocomplete-container">
+                <label>ÁMBITO</label>
+                <input type="text" [(ngModel)]="unidad.ambito" name="uni_ambito" 
+                       placeholder="ÁMBITO" (input)="onAmbitoInput()" autocomplete="off">
+                
+                @if (filteredAmbitos.length > 0) {
+                <ul class="suggestions-list">
+                    @for (a of filteredAmbitos; track a) {
+                    <li (click)="selectAmbito(a)">{{ a }}</li>
+                    }
+                </ul>
+                }
+            </div>
+            }
+
+            <div class="edit-actions full-width">
+                <button type="button" class="btn-cancel" (click)="cancel()">
+                    <span>❌</span> Cancelar
+                </button>
+                <button type="button" class="btn-confirm" (click)="confirmSave()" [disabled]="saving">
+                    <span>{{ saving ? '⌛' : '✅' }}</span>
+                    {{ saving ? 'Guardando...' : (id === 0 ? 'Crear Registro' : 'Confirmar Cambios') }}
+                </button>
+            </div>
+        </form>
+        }
+    </div>
+</div>

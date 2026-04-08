@@ -1,0 +1,213 @@
+<div class="profile-page-container">
+    <aside class="profile-sidebar">
+        <div class="sidebar-top">
+            <button class="btn-back" (click)="goBack()">
+                <span class="icon">⬅</span> Volver al Dashboard
+            </button>
+        </div>
+        <div class="profile-avatar-large">
+            {{ (activeTab === 'edit' ? profile.username?.[0] : 'N')?.[0]?.toUpperCase() || 'U' }}
+        </div>
+        <h2 class="profile-username-title">{{ activeTab === 'edit' ? profile.username : activeTab === 'users' ? 'Usuarios' : 'Nuevo Usuario'}}</h2>
+        <p class="profile-subtitle">{{ activeTab === 'edit' ? profile.email : activeTab === 'users' ? '' : 'Registro Institucional'}}</p>
+
+        <nav class="sidebar-nav">
+            <button class="nav-link" [class.active]="activeTab === 'edit'" (click)="switchTab('edit')">
+                <span class="icon">👤</span> Mi Información
+            </button>
+            @if (isAdmin) {
+                <button class="nav-link" [class.active]="activeTab === 'register'" (click)="switchTab('register')">
+                    <span class="icon">➕</span> Nuevo Usuario
+                </button>
+                <button class="nav-link" [class.active]="activeTab === 'users'" (click)="switchTab('users')">
+                    <span class="icon">📋</span> Ver Usuarios
+                </button>
+            }
+        </nav>
+    </aside>
+
+    <main class="profile-main">
+        <header class="profile-header">
+            <h1>{{ activeTab === 'edit' ? 'Configuración de Perfil' : (activeTab === 'register' ? 'Administración de Usuarios' : 'Listado de Usuarios') }}</h1>
+            <p>{{ activeTab === 'edit' ? 'Gestiona tu información institucional y seguridad.' : (activeTab === 'register' ? 'Crea nuevas cuentas de acceso para el personal autorizado.' : 'Visualiza y gestiona las cuentas de usuario registradas.') }}</p>
+        </header>
+
+        @if (loading) {
+        <div class="profile-loader">
+            <div class="spinner"></div>
+            <p>Obteniendo datos...</p>
+        </div>
+        } @else {
+
+        @if (activeTab === 'edit') {
+        <div class="profile-card animate-fade-in">
+            <form (submit)="$event.preventDefault()" class="profile-form">
+                <section class="form-section">
+                    <h3>Información General</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Nombre de Usuario</label>
+                            <input type="text" [value]="profile.username" disabled class="input-disabled">
+                            <small>El nombre de usuario es inmutable por seguridad.</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Correo Electrónico</label>
+                            <input type="email" [(ngModel)]="profile.email" name="email"
+                                placeholder="ejemplo@misiones.gov.ar">
+                        </div>
+                        <div class="form-group">
+                            <label>Oficina / Unidad</label>
+                            <input type="text" [value]="profile.oficina || 'No asignada'" disabled class="input-disabled">
+                        </div>
+                        <div class="form-group">
+                            <label>Rol Institucional</label>
+                            <input type="text" [value]="profile.rol | titlecase" disabled class="input-disabled">
+                        </div>
+                    </div>
+                </section>
+
+                <hr class="section-divider">
+
+                <section class="form-section">
+                    <h3>Seguridad y Contraseña</h3>
+                    <p class="section-description">Completa estos campos solo si deseas actualizar tu contraseña actual.</p>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Nueva Contraseña</label>
+                            <input type="password" [(ngModel)]="newPassword" name="newPass" placeholder="••••••••">
+                        </div>
+                        <div class="form-group">
+                            <label>Confirmar Contraseña</label>
+                            <input type="password" [(ngModel)]="confirmPassword" name="confirmPass"
+                                placeholder="••••••••">
+                        </div>
+                    </div>
+                </section>
+
+                <div class="profile-actions">
+                    <button type="button" class="btn-cancel-profile" (click)="goBack()">Cancelar</button>
+                    <button type="button" class="btn-save-profile" (click)="save()" [disabled]="saving">
+                        {{ saving ? 'Guardando...' : 'Guardar Cambios' }}
+                    </button>
+                </div>
+            </form>
+        </div>
+        }
+
+        @if (activeTab === 'register') {
+        <div class="profile-card animate-fade-in">
+            <form (submit)="$event.preventDefault()" class="profile-form">
+                <section class="form-section">
+                    <h3>Registro de Nueva Cuenta</h3>
+                    <p class="section-description">Ingresa los datos básicos para el nuevo integrante.</p>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Nombre de Usuario</label>
+                            <input type="text" [(ngModel)]="newUser.usuario" name="regUser" placeholder="Ej: juan.perez">
+                        </div>
+                        <div class="form-group">
+                            <label>Correo Institucional</label>
+                            <input type="email" [(ngModel)]="newUser.correo" name="regEmail" placeholder="juan@misiones.gov.ar">
+                        </div>
+                        <div class="form-group">
+                            <label>Oficina</label>
+                            <select [(ngModel)]="newUser.oficina" name="regOficina" class="form-select" [disabled]="!isSuperAdmin">
+                                @if (!isSuperAdmin) {
+                                    <option [value]="profile.oficina" selected>{{ profile.oficina }}</option>
+                                } @else {
+                                    <option value="" disabled selected>Seleccione una oficina</option>
+                                    @for (off of offices; track off) {
+                                        <option [value]="off">{{ off }}</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <div class="form-group checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" 
+                                       [checked]="newUser.rol === 'admin' || newUser.rol === 'superAdmin'" 
+                                       (change)="onRoleChange('admin', $event)">
+                                <span>Asignar Privilegios de Administrador</span>
+                            </label>
+                            <small>Si no se selecciona, el usuario será 'integrante' por defecto.</small>
+                        </div>
+
+                        @if (isSuperAdmin) {
+                            <div class="form-group checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" 
+                                           [checked]="newUser.rol === 'superAdmin'" 
+                                           (change)="onRoleChange('superAdmin', $event)">
+                                    <span>Asignar Privilegios de Super Administrador</span>
+                                </label>
+                                <small>Solo un Super Administrador puede asignar este nivel de permisos.</small>
+                            </div>
+                        }
+                    </div>
+                </section>
+
+                <hr class="section-divider">
+
+                <section class="form-section">
+                    <h3>Credenciales Temporales</h3>
+                    <div class="form-group">
+                        <label>Contraseña por Defecto</label>
+                        <input type="text" [value]="newUser.password" disabled class="input-disabled">
+                        <small>Esta contraseña es fija (Abc123456). El usuario deberá cambiarla obligatoriamente al ingresar.</small>
+                    </div>
+                </section>
+
+                <div class="profile-actions">
+                    <button type="button" class="btn-cancel-profile" (click)="switchTab('edit')">Volver</button>
+                    <button type="button" class="btn-save-profile" (click)="registerUser()" [disabled]="saving">
+                        {{ saving ? 'Registrando...' : 'Registrar Nuevo Usuario' }}
+                    </button>
+                </div>
+            </form>
+        </div>
+        }
+
+        @if (activeTab === 'users') {
+        <div class="profile-card animate-fade-in">
+            <div class="table-container">
+                <table class="user-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Usuario</th>
+                            <th>Oficina</th>
+                            <th>Rol</th>
+                            <th class="actions-column">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (user of users; track user.idusuario) {
+                        <tr>
+                            <td>{{ user.idusuario }}</td>
+                            <td class="username-cell">{{ user.username }}</td>
+                            <td>{{ user.oficina || '-' }}</td>
+                            <td><span class="badge-rol" [attr.data-rol]="user.rol">{{ user.rol || 'integrante' }}</span></td>
+                            <td class="actions-cell">
+                                <button class="btn-reset-pass" (click)="resetUserPassword(user)" [disabled]="saving || !isAdmin" title="Resetear Contraseña">
+                                    <span class="icon">🔑</span> Resetear
+                                </button>
+                            </td>
+                        </tr>
+                        } @empty {
+                        <tr>
+                            <td colspan="5" class="empty-message">No se encontraron usuarios registrados.</td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="profile-actions">
+                <button type="button" class="btn-cancel-profile" (click)="switchTab('edit')">Volver</button>
+            </div>
+        </div>
+        }
+
+        }
+    </main>
+</div>

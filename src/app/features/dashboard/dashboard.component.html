@@ -1,0 +1,346 @@
+<div class="dashboard-container">
+    <!-- Sidebar / Navigation -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <img src="logo.png" alt="Logo" class="mini-logo" />
+            <div class="header-text">
+                <h2>Misiones</h2>
+                <p>Programa</p>
+            </div>
+        </div>
+
+        <nav class="nav-menu">
+            <button class="nav-item" [class.active]="activeView === 'informe'" (click)="switchView('informe')">
+                <span class="icon">📊</span> Ver Informe
+            </button>
+            <button class="nav-item" [class.active]="activeView === 'componentes'" (click)="switchView('componentes')">
+                <span class="icon">🔌</span> Componentes
+            </button>
+            <button class="nav-item" [class.active]="activeView === 'equipos'" (click)="switchView('equipos')">
+                <span class="icon">💻</span> Equipos
+            </button>
+            <button class="nav-item" [class.active]="activeView === 'unidades'" (click)="switchView('unidades')">
+                <span class="icon">🏢</span> Unidades
+            </button>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="btn-logout" (click)="logout()">
+                <span class="icon">⬅</span> Cerrar Sesión
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <header class="content-header">
+            <h1>{{ activeView | titlecase }}</h1>
+            <div class="user-info" (click)="onProfileClick()" title="Mi Perfil">
+                <span> {{ profile.username }}</span>
+                <div class="avatar">{{ profile.username?.[0]?.toUpperCase() }}</div>
+            </div>
+        </header>
+
+        <div class="content-body">
+            @if (loading) {
+            <div class="loader-container">
+                <div class="spinner"></div>
+                <p>Cargando datos institucionalmente...</p>
+            </div>
+            } @else {
+
+            <!-- Vista: INFORME (Búscador y PDF) -->
+            @if (activeView === 'informe') {
+            <div class="report-section">
+                <div class="welcome-card search-card">
+                    <h3>Generar Informe Institucional</h3>
+                    <p>Busca una Unidad para obtener el desglose completo de equipos y componentes asociados.</p>
+
+                    <div class="search-box">
+                        <input type="text" [(ngModel)]="searchText" placeholder="Buscar unidad por nombre o código..."
+                            class="search-input" />
+                        @if (searchText && !selectedUnidad) {
+                        <ul class="search-results">
+                            @for (u of filteredUnidades; track u.codigo_unidad) {
+                            <li (click)="selectUnidad(u)">
+                                <strong>{{ u.unidad }}</strong> - {{ u.nombre_de_la_unidad }}
+                            </li>
+                            } @empty {
+                            <li class="no-results">No se encontraron unidades</li>
+                            }
+                        </ul>
+                        }
+                    </div>
+                </div>
+
+                @if (selectedUnidad) {
+                <div class="selection-card animate-fade-in">
+                    <div class="selection-info">
+                        <div class="badge-icon">🏛️</div>
+                        <div class="text">
+                            <h4>{{ selectedUnidad.nombre_de_la_unidad }}</h4>
+                            <p>Código: {{ selectedUnidad.unidad }} | Ámbito: {{ selectedUnidad.ambito || 'N/A' }}</p>
+                        </div>
+                    </div>
+
+                    <div class="action-box">
+                        <p>El informe incluirá todos los equipos vinculados y sus componentes técnicos.</p>
+                        <div class="button-group">
+                            <button class="btn-clear" (click)="clearSearch()">
+                                <span class="icon">🧹</span> Limpiar
+                            </button>
+                            <button class="btn-tool" (click)="onVerDatosCompletos()" [disabled]="loading">
+                                <span class="icon">👁️</span> Ver datos Completos
+                            </button>
+                            <button class="btn-download" (click)="downloadPdf()" [disabled]="loading">
+                                <span class="icon">📄</span>
+                                {{ loading ? 'Preparando...' : 'Descargar Informe PDF' }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DETALLE DEL INFORME (Tabla de Equipos y Componentes) -->
+                @if (unidadAgrupada) {
+                <div class="detailed-report animate-fade-in">
+                    <div class="report-header">
+                        <h3>Detalle de Activos - {{ selectedUnidad.unidad }}</h3>
+                        <div class="report-search">
+                            <input type="text" [(ngModel)]="reportSearchText"
+                                placeholder="Filtrar por Equipo, Componente o Serie..." class="report-filter-input" />
+                            <span class="search-icon">🔍</span>
+                        </div>
+                    </div>
+
+                    @for (eq of filteredReportData; track eq.codigo_equipo) {
+                    <div class="equipo-group">
+                        <div class="equipo-header">
+                            <span class="eq-icon">💻</span>
+                            <strong>Equipo:</strong> {{ eq.equipo }}
+                            <span class="eq-id">(ID: {{ eq.codigo_equipo }})</span>
+                        </div>
+
+                        <table class="nested-table">
+                            <thead>
+                                <tr>
+                                    <th>Componente</th>
+                                    <th>Serie</th>
+                                    <th>Cant.</th>
+                                    <th>Nro_alta</th>
+                                    <th class="actions-col">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (comp of eq.componentes; track comp.codigo_componente) {
+                                <tr>
+                                    <td>{{ comp.componente }}</td>
+                                    <td>{{ comp.serie || '-' }}</td>
+                                    <td><span class="badge" [attr.data-status]="comp.estado">{{ comp.total }}</span>
+                                    </td>
+                                    <td>{{ comp.Nro_alta || '-' }}</td>
+                                    <td class="actions-cell">
+                                        <button class="btn-action edit" (click)="onEdit(comp, 'componentes')"
+                                            title="Editar">✏️</button>
+                                        <button class="btn-action delete"
+                                            (click)="onDelete('componentes', comp.codigo_componente)"
+                                            title="Eliminar">🗑️</button>
+                                    </td>
+                                </tr>
+                                } @empty {
+                                <tr>
+                                    <td colspan="4" class="empty-msg">No se encontraron componentes que coincidan.</td>
+                                </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    } @empty {
+                    <div class="empty-results-card">
+                        <p>No se encontraron resultados para "{{ reportSearchText }}".</p>
+                    </div>
+                    }
+                </div>
+                }
+                }
+            </div>
+            }
+
+            <!-- Vista: COMPONENTES -->
+            @if (activeView === 'componentes') {
+            <div class="view-toolbar">
+                <div class="toolbar-actions">
+                    <button class="btn-tool" (click)="onVerTodos()">
+                        <span class="icon">👁️</span> Ver todos
+                    </button>
+                    <button class="btn-tool btn-new" (click)="onNuevo()">
+                        <span class="icon">➕</span> Nuevo Componente
+                    </button>
+                </div>
+                <div class="toolbar-search">
+                    <input type="text" [(ngModel)]="viewSearchText.componentes" (keyup.enter)="onSearch()"
+                        placeholder="Buscar por nombre o serie..." class="tool-search-input" />
+                    <button class="btn-search-icon" (click)="onSearch()">🔍</button>
+                </div>
+            </div>
+
+            @if (showTable.componentes) {
+            <div class="table-card animate-fade-in">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Componente</th>
+                            <th>Serie</th>
+                            <th>Estado</th>
+                            <th>Ubicación</th>
+                            <th class="actions-col">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (c of filteredData; track c.codigo_componente) {
+                        <tr>
+                            <td>{{ c.codigo_componente }}</td>
+                            <td>{{ c.componente }}</td>
+                            <td>{{ c.serie }}</td>
+                            <td><span class="badge" [attr.data-status]="c.estado">{{ c.estado }}</span></td>
+                            <td>{{ c.ubicacion }}</td>
+                            <td class="actions-cell">
+                                <button class="btn-action edit" (click)="onEdit(c)" title="Editar">✏️</button>
+                                <button class="btn-action delete" (click)="onDelete('componentes', c.codigo_componente)"
+                                    title="Eliminar">🗑️</button>
+                            </td>
+                        </tr>
+                        } @empty {
+                        <tr>
+                            <td colspan="6" class="empty-msg">No se encontraron componentes.</td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            } @else {
+            <div class="empty-state-card">
+                <div class="empty-icon">🔌</div>
+                <p>Pulsa "Ver todos" o realiza una búsqueda para mostrar los componentes.</p>
+            </div>
+            }
+            }
+
+            <!-- Vista: EQUIPOS -->
+            @if (activeView === 'equipos') {
+            <div class="view-toolbar">
+                <div class="toolbar-actions">
+                    <button class="btn-tool" (click)="onVerTodos()">
+                        <span class="icon">👁️</span> Ver todos
+                    </button>
+                    <button class="btn-tool btn-new" (click)="onNuevo()">
+                        <span class="icon">➕</span> Nuevo Equipo
+                    </button>
+                </div>
+                <div class="toolbar-search">
+                    <input type="text" [(ngModel)]="viewSearchText.equipos" (keyup.enter)="onSearch()"
+                        placeholder="Buscar por nombre..." class="tool-search-input" />
+                    <button class="btn-search-icon" (click)="onSearch()">🔍</button>
+                </div>
+            </div>
+
+            @if (showTable.equipos) {
+            <div class="table-card animate-fade-in">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre del Equipo</th>
+                            <th class="actions-col">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (e of filteredData; track e.codigo_equipo) {
+                        <tr>
+                            <td>{{ e.codigo_equipo }}</td>
+                            <td>{{ e.equipo }}</td>
+                            <td class="actions-cell">
+                                <button class="btn-action edit" (click)="onEdit(e)" title="Editar">✏️</button>
+                                <button class="btn-action delete" (click)="onDelete('equipos', e.codigo_equipo)"
+                                    title="Eliminar">🗑️</button>
+                            </td>
+                        </tr>
+                        } @empty {
+                        <tr>
+                            <td colspan="3" class="empty-msg">No se encontraron equipos.</td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            } @else {
+            <div class="empty-state-card">
+                <div class="empty-icon">💻</div>
+                <p>Pulsa "Ver todos" o realiza una búsqueda para mostrar los equipos.</p>
+            </div>
+            }
+            }
+
+            <!-- Vista: UNIDADES -->
+            @if (activeView === 'unidades') {
+            <div class="view-toolbar">
+                <div class="toolbar-actions">
+                    <button class="btn-tool" (click)="onVerTodos()">
+                        <span class="icon">👁️</span> Ver todos
+                    </button>
+                    <button class="btn-tool btn-new" (click)="onNuevo()">
+                        <span class="icon">➕</span> Nueva Unidad
+                    </button>
+                </div>
+                <div class="toolbar-search">
+                    <input type="text" [(ngModel)]="viewSearchText.unidades" (keyup.enter)="onSearch()"
+                        placeholder="Buscar por nombre o unidad..." class="tool-search-input" />
+                    <button class="btn-search-icon" (click)="onSearch()">🔍</button>
+                </div>
+            </div>
+
+            @if (showTable.unidades) {
+            <div class="table-card animate-fade-in">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Unidad</th>
+                            <th>Nombre Institucional</th>
+                            <th>Ámbito</th>
+                            <th class="actions-col">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (u of filteredData; track u.codigo_unidad) {
+                        <tr>
+                            <td>{{ u.codigo_unidad }}</td>
+                            <td>{{ u.unidad }}</td>
+                            <td>{{ u.nombre_de_la_unidad }}</td>
+                            <td>{{ u.ambito || 'N/A' }}</td>
+                            <td class="actions-cell">
+                                <button class="btn-action edit" (click)="onEdit(u)" title="Editar">✏️</button>
+                                <button class="btn-action delete" (click)="onDelete('unidades', u.codigo_unidad)"
+                                    title="Eliminar">🗑️</button>
+                            </td>
+                        </tr>
+                        } @empty {
+                        <tr>
+                            <td colspan="5" class="empty-msg">No se encontraron unidades.</td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            } @else {
+            <div class="empty-state-card">
+                <div class="empty-icon">🏢</div>
+                <p>Pulsa "Ver todos" o realiza una búsqueda para mostrar las unidades.</p>
+            </div>
+            }
+            }
+
+            }
+        </div>
+    </main>
+</div>

@@ -1,0 +1,87 @@
+<div class="full-data-container">
+    <header class="page-header">
+        <div class="header-content">
+            <div class="title-section">
+                <h1>Detalle Técnico Completo</h1>
+                @if (unidad) {
+                <p class="subtitle">
+                    Unidad: <strong>{{ unidad.nombre_de_la_unidad }}</strong> ({{ unidad.unidad }})
+                </p>
+                }
+            </div>
+            <button class="btn-back" (click)="goBack()">
+                <span class="icon">⬅</span> Volver al Dashboard
+            </button>
+        </div>
+    </header>
+
+    <div class="content-wrapper">
+        @if (loading) {
+        <div class="loader-container">
+            <div class="spinner"></div>
+            <p>Obteniendo registros técnicos institucionales...</p>
+        </div>
+        } @else {
+
+        @if (componentes.length > 0) {
+        <div class="table-card animate-fade-in">
+            <div class="table-header-info">
+                <span class="badge-count">{{ componentes.length }} Componentes encontrados</span>
+                <button class="btn-excel" (click)="onExportExcel()" [disabled]="loading || componentes.length === 0">
+                    <span class="icon">📈</span> Exportar Excel
+                </button>
+            </div>
+            <div class="scrollable-table">
+                <table class="premium-table">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Equipo</th>
+                            <th>Denominación Componente</th>
+                            <th>Nro. Serie / Lote</th>
+                            <th>Cant.</th>
+                            <th>Ubicación</th>
+                            <th>Estado Técnico</th>
+                            <th>Nro Alta</th>
+                            <th>Clasificación</th>
+                            <th>Lugar</th>
+                            <th>Observación</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (c of componentes; track c.codigo_componente) {
+                        <tr>
+                            <td><span class="id-tag">{{ c.codigo_componente }}</span></td>
+                            <td class="bold-text">{{ c.equipo || 'S/E' }}</td>
+                            <td class="bold-text">{{ c.componente }}</td>
+                            <td>{{ c.serie || 'N/A' }}</td>
+                            <td>{{ c.total }}</td>
+                            <td>{{ c.ubicacion || 'N/A' }}</td>
+                            <td>
+                                <span class="status-badge" [attr.data-status]="c.estado">
+                                    {{ c.estado || 'S/E' }}
+                                </span>
+                            </td>
+                            <td>{{ c.Nro_alta || '---' }}</td>
+                            <td>{{ c.clasificacion || 'N/A' }}</td>
+                            <td>{{ c.lugar || 'N/A' }}</td>
+                            <td class="obs-cell" [title]="c.observacion">
+                                {{ c.observacion || 'Sin observaciones' }}
+                            </td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        } @else {
+        <div class="empty-state-card animate-fade-in">
+            <div class="empty-icon">📂</div>
+            <h3>Sin registros</h3>
+            <p>No se encontraron componentes detallados vinculados a esta unidad.</p>
+            <button class="btn-tool" (click)="goBack()">Regresar</button>
+        </div>
+        }
+        }
+    </div>
+</div>
