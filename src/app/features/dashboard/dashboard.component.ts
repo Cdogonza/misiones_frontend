@@ -65,6 +65,13 @@ export class DashboardComponent implements OnInit {
     // ── Ciclo de vida ──────────────────────────────────────────────────────
 
     ngOnInit(): void {
+        // Redirección si la oficina es deposito
+        const oficina = this.auth.getUserOficina();
+        if (oficina?.toLowerCase().includes('deposito')) {
+            this.router.navigate(['/deposito']);
+            return;
+        }
+
         this.loadProfile();
         // Si no había unidades cargadas, las traemos (para el buscador de informe)
         if (this.unidades.length === 0) {

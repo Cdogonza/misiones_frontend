@@ -41,3 +41,10 @@ export interface Historial {
     fecha?: string;
     detalles: string;
 }
+
+export interface CartItem {
+    componentId: number;
+    nombre: string;
+    equipo: string;
+    cantidad: number;
+}

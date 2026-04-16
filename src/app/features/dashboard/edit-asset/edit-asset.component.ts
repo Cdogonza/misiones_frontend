@@ -251,9 +251,11 @@ export class EditAssetComponent implements OnInit {
     }
 
     cancel(): void {
-        // Volvemos al dashboard. 
-        // Si venimos de un informe de unidad, lo ideal sería volver a esa unidad específica.
-        // Pero por simplicidad volvemos al dashboard general.
-        this.router.navigate(['/dashboard']);
+        const oficina = this.auth.getUserOficina();
+        if (oficina?.toLowerCase() === 'deposito') {
+            this.router.navigate(['/deposito']);
+        } else {
+            this.router.navigate(['/dashboard']);
+        }
     }
 }

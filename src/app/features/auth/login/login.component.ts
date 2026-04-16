@@ -46,7 +46,12 @@ export class LoginComponent {
         this.auth.login(this.form.value).subscribe({
             next: () => {
                 this.loading = false;
-                this.router.navigate(['/dashboard']);
+                const oficina = this.auth.getUserOficina();
+                if (oficina?.toLowerCase().includes('deposito')) {
+                    this.router.navigate(['/deposito']);
+                } else {
+                    this.router.navigate(['/dashboard']);
+                }
             },
             error: (err) => {
                 this.loading = false;

@@ -202,7 +202,17 @@ export class ProfileComponent implements OnInit {
         this.saving = false;
     }
 
+    get backLabel(): string {
+        const oficina = this.auth.getUserOficina();
+        return oficina?.toLowerCase().includes('deposito') ? 'Volver al Depósito' : 'Volver al Dashboard';
+    }
+
     goBack(): void {
-        this.router.navigate(['/dashboard']);
+        const oficina = this.auth.getUserOficina();
+        if (oficina?.toLowerCase().includes('deposito')) {
+            this.router.navigate(['/deposito']);
+        } else {
+            this.router.navigate(['/dashboard']);
+        }
     }
 }

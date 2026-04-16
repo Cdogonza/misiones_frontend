@@ -135,4 +135,16 @@ export class AuthService {
             return null;
         }
     }
+
+    getUserOficina(): string | null {
+        const token = this.getToken();
+        if (!token) return null;
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            console.log('[AuthService] JWT payload:', payload); // DEBUG - remove later
+            return payload.oficina || null;
+        } catch {
+            return null;
+        }
+    }
 }

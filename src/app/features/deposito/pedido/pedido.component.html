@@ -1,0 +1,107 @@
+<div class="pedido-container">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <img src="logo.png" alt="Logo" class="mini-logo" />
+            <div class="header-text">
+                <h2>Misiones</h2>
+                <p>Programa</p>
+            </div>
+        </div>
+
+        <nav class="nav-menu">
+            <button class="nav-item" (click)="goBack()">
+                <span class="icon">📦</span> Depósito
+            </button>
+            <button class="nav-item active">
+                <span class="icon">🛒</span> Detalle del Pedido
+                @if (cartService.totalUniqueItems > 0) {
+                    <span class="cart-badge">{{ cartService.totalItemsCount }}</span>
+                }
+            </button>
+            <div class="nav-divider"></div>
+            <p class="nav-hint">Gestión de Pedido</p>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="btn-logout" (click)="goBack()">
+                <span class="icon">⬅</span> Volver
+            </button>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="content-header">
+            <h1>Configuración de Pedido</h1>
+            <p>Revisa los elementos seleccionados antes de confirmar el envío al sistema central.</p>
+        </header>
+
+        <div class="content-body">
+            @if (loading) {
+                <div class="loader-container">
+                    <div class="spinner"></div>
+                    <p>Enviando solicitud...</p>
+                </div>
+            } @else {
+                <div class="order-layout">
+                    <!-- Tabla de items -->
+                    <div class="table-card animate-fade-in">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>CANT.</th>
+                                    <th>COMPONENTE</th>
+                                    <th>EQUIPO / ORIGEN</th>
+                                    <th class="actions-col"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (item of cartItems; track item.componentId) {
+                                <tr>
+                                    <td class="qty-cell">
+                                        <div class="qty-badge">{{ item.cantidad }}</div>
+                                    </td>
+                                    <td class="name-cell">{{ item.nombre }}</td>
+                                    <td class="equipo-cell">{{ item.equipo }}</td>
+                                    <td class="actions-cell">
+                                        <button class="btn-remove" (click)="removeItem(item.componentId)" title="Quitar item">×</button>
+                                    </td>
+                                </tr>
+                                } @empty {
+                                <tr>
+                                    <td colspan="4" class="empty-msg">No hay elementos en tu pedido. Vuelve al inventario para agregar componentes.</td>
+                                </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Panel de confirmación -->
+                    <div class="confirm-panel animate-fade-in">
+                        <div class="form-group">
+                            <label>Observaciones del Pedido</label>
+                            <textarea [(ngModel)]="observaciones" placeholder="Escribe aquí cualquier indicación o aclaración necesaria..."></textarea>
+                        </div>
+
+                        <div class="summary-info">
+                            <div class="info-row">
+                                <span>Total de unidades:</span>
+                                <strong>{{ cartService.totalItemsCount }}</strong>
+                            </div>
+                            <div class="info-row">
+                                <span>Items únicos:</span>
+                                <strong>{{ cartService.totalUniqueItems }}</strong>
+                            </div>
+                        </div>
+
+                        <button class="btn-confirm-order" (click)="confirmarPedido()" [disabled]="cartItems.length === 0">
+                            🚀 Confirmar y Enviar Pedido
+                        </button>
+                        <button class="btn-add-more" (click)="goBack()">
+                            ➕ Agregar más componentes
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    </main>
+</div>

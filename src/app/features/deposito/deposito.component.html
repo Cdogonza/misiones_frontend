@@ -1,0 +1,142 @@
+<div class="dashboard-container">
+    <!-- Sidebar / Navigation -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <img src="logo.png" alt="Logo" class="mini-logo" />
+            <div class="header-text">
+                <h2>Misiones</h2>
+                <p>Programa</p>
+            </div>
+        </div>
+
+        <nav class="nav-menu">
+            <button class="nav-item active">
+                <span class="icon">📦</span> Depósito
+            </button>
+            <button class="nav-item" (click)="onVerPedido()">
+                <span class="icon">🛒</span> Mi Pedido
+                @if (cartService.totalUniqueItems > 0) {
+                    <span class="cart-badge">{{ cartService.totalItemsCount }}</span>
+                }
+            </button>
+            <div class="nav-divider"></div>
+            <p class="nav-hint">Gestión de Inventario</p>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="btn-logout" (click)="logout()">
+                <span class="icon">⬅</span> Cerrar Sesión
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <header class="content-header">
+            <h1>Panel de Depósito</h1>
+            <div class="user-info" (click)="onProfileClick()" title="Mi Perfil">
+                <span> {{ profile.username }}</span>
+                <div class="avatar">{{ profile.username?.[0]?.toUpperCase() }}</div>
+            </div>
+        </header>
+
+        <div class="content-body">
+            @if (loading) {
+            <div class="loader-container">
+                <div class="spinner"></div>
+                <p>Gestionando inventario...</p>
+            </div>
+            } @else {
+
+            <div class="view-toolbar">
+                <div class="toolbar-actions">
+                    <button class="btn-tool" (click)="onVerTodos()">
+                        <span class="icon">👁️</span> Ver todos
+                    </button>
+                    <button class="btn-tool btn-new" (click)="onNuevo()">
+                        <span class="icon">➕</span> Nuevo Componente
+                    </button>
+                </div>
+                <div class="toolbar-search">
+                    <input type="text" [(ngModel)]="searchText" (keyup.enter)="onSearch()"
+                        placeholder="Filtrar por componente o serie..." class="tool-search-input" />
+                    <button class="btn-search-icon" (click)="onSearch()">🔍</button>
+                </div>
+            </div>
+
+            @if (showTable) {
+            <div class="table-card animate-fade-in">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Componente</th>
+                            <th>Serie</th>
+                            <th>Estado</th>
+                            <th>Clasificación</th>
+                            <th class="actions-col">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (c of filteredData; track c.codigo_componente) {
+                        <tr>
+                            <td>{{ c.codigo_componente }}</td>
+                            <td>{{ c.componente }}</td>
+                            <td>{{ c.serie || '-' }}</td>
+                            <td><span class="badge" [attr.data-status]="c.estado">{{ c.estado }}</span></td>
+                            <td>{{ c.clasificacion || '-' }}</td>
+                            <td class="actions-cell">
+                                <button class="btn-action cart" (click)="openCartModal(c)" title="Añadir al Pedido">🛒</button>
+                                <button class="btn-action edit" (click)="onEdit(c)" title="Editar">✏️</button>
+                                <button class="btn-action delete" (click)="onDelete(c.codigo_componente)"
+                                    title="Eliminar">🗑️</button>
+                            </td>
+                        </tr>
+                        } @empty {
+                        <tr>
+                            <td colspan="6" class="empty-msg">No se encontraron componentes en DEPOSITO BASE.</td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            } @else {
+            <div class="empty-state-card animate-fade-in">
+                <div class="empty-icon">🏗️</div>
+                <h2>Configuración Requerida</h2>
+                <p>No se ha podido localizar la unidad "DEPOSITO BASE" en el sistema institucional.</p>
+                <div class="status-badge">Verificar Unidades</div>
+            </div>
+            }
+
+            }
+        </div>
+    </main>
+
+    <!-- Modal de Cantidad para Pedido -->
+    @if (isCartModalOpen) {
+    <div class="modal-overlay animate-fade-in">
+        <div class="cart-modal">
+            <div class="modal-header">
+                <h3>Añadir al Pedido</h3>
+                <button class="close-btn" (click)="closeCartModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <p>¿Cuántas unidades de <strong>{{ selectedComponentForCart?.componente }}</strong> deseas solicitar?</p>
+                <div class="quantity-selector">
+                    <label>Cantidad:</label>
+                    <select [(ngModel)]="cartQuantity">
+                        @for (n of [1,2,3,4,5,6,7,8,9,10]; track n) {
+                            <option [value]="n">{{ n }}</option>
+                        }
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" (click)="closeCartModal()">Cancelar</button>
+                <button class="btn-confirm" (click)="confirmAddToCart()">🛒 Confirmar</button>
+            </div>
+        </div>
+    </div>
+    }
+</div>

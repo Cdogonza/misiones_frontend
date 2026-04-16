@@ -37,6 +37,18 @@ export const routes: Routes = [
         canActivate: [authGuard]
     },
     {
+        path: 'deposito',
+        loadComponent: () =>
+            import('./features/deposito/deposito.component').then(m => m.DepositoComponent),
+        canActivate: [authGuard]
+    },
+    {
+        path: 'deposito/pedido',
+        loadComponent: () =>
+            import('./features/deposito/pedido/pedido.component').then(m => m.PedidoComponent),
+        canActivate: [authGuard]
+    },
+    {
         path: '**',
         redirectTo: 'login'
     }

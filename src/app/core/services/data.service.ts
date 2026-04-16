@@ -11,6 +11,7 @@ export class DataService {
     private readonly EQUIPOS_API = `${environment.apiUrl}/api/equipos`;
     private readonly COMPONENTES_API = `${environment.apiUrl}/api/componentes`;
     private readonly UNIDADES_API = `${environment.apiUrl}/api/unidades`;
+    private readonly PEDIDOS_API = `${environment.apiUrl}/api/pedidos`;
     private readonly HISTORIAL_API = `${environment.apiUrl}/health`;
 
     constructor(private http: HttpClient) { }
@@ -75,5 +76,22 @@ export class DataService {
     // HISTORIAL
     addHistorial(registro: any): Observable<any> {
         return this.http.get<any>(this.HISTORIAL_API);
+    }
+
+    // PEDIDOS
+    createPedido(idusuario: number, items: any[], observaciones: string): Observable<any> {
+        return this.http.post<any>(this.PEDIDOS_API, { idusuario, items, observaciones });
+    }
+
+    getAllPedidos(): Observable<any[]> {
+        return this.http.get<any[]>(this.PEDIDOS_API);
+    }
+
+    getPedidosByUsuario(idusuario: number): Observable<any[]> {
+        return this.http.get<any[]>(`${this.PEDIDOS_API}/usuario/${idusuario}`);
+    }
+
+    updatePedidoEstado(idpedido: number, estado: string): Observable<any> {
+        return this.http.patch<any>(`${this.PEDIDOS_API}/${idpedido}/estado`, { estado });
     }
 }
