@@ -1,103 +1,155 @@
 import { Injectable } from '@angular/core';
-import { jsPDF } from 'jspdf';
+import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { UnidadAgrupada } from '../models/data.model';
 
 @Injectable({
-    providedIn: 'root'
+  providedIn: 'root'
 })
 export class PdfService {
 
-    constructor() { }
+  constructor() { }
 
-    exportUnidadAgrupada(data: UnidadAgrupada): void {
-        const doc = new jsPDF();
-        const azulInstitucional = [26, 58, 143]; // #1a3a8f
-        const doradoInstitucional = [245, 197, 24]; // #f5c518
+  generateReceiptPDF(pedido: any, items: any[], unidades: any[]): void {
+    const doc = new jsPDF();
+    const dateStr = pedido.created_at ? new Date(pedido.created_at).toLocaleDateString() : new Date().toLocaleDateString();
+    
+    // Buscar nombre de unidad destino
+    // El pedido puede traer el nombre directamente si el backend hizo el JOIN,
+    // o lo buscamos en la lista de unidades enviada.
+    const nombreDestino = pedido.unidad_destino_nombre || 
+                         unidades.find(u => u.codigo_unidad === pedido.codigo_unidad_destino)?.nombre_de_la_unidad || 
+                         'N/A';
 
-        // ENCABEZADO
-        doc.setFillColor(azulInstitucional[0], azulInstitucional[1], azulInstitucional[2]);
-        doc.rect(0, 0, 210, 40, 'F');
+    // Cabecera institucional
+    doc.setFontSize(18);
+    doc.setTextColor(26, 58, 143); // Azul institucional
+    doc.text('RECIBO DE PEDIDO DE MATERIAL', 105, 20, { align: 'center' });
+    
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Fecha de Pedido: ${dateStr}`, 190, 10, { align: 'right' });
+    doc.text(`Nro. Pedido interno: #${pedido.idpedido}`, 190, 15, { align: 'right' });
 
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(22);
-        doc.setFont('helvetica', 'bold');
-        doc.text('BN. COM. Nro 2', 105, 18, { align: 'center' });
+    // Información del Préstamo
+    doc.setFontSize(11);
+    doc.setTextColor(0);
+    doc.text('INFORMACIÓN GENERAL', 15, 35);
+    doc.line(15, 37, 195, 37);
 
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'normal');
-        doc.text('SISTEMA DE GESTIÓN DE EQUIPOS', 105, 28, { align: 'center' });
+    doc.setFont('helvetica', 'bold');
+    doc.text('Unidad que Entrega:', 15, 45);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Bn. Com. Nro 2', 60, 45);
 
-        // INFORMACIÓN DE LA UNIDAD
-        doc.setTextColor(0, 0, 0);
-        doc.setFontSize(16);
-        doc.setFont('helvetica', 'bold');
-        doc.text(`INFORME DE UNIDAD: ${data.unidad.unidad}`, 14, 55);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Unidad que Recibe:', 15, 52);
+    doc.setFont('helvetica', 'normal');
+    doc.text(nombreDestino, 60, 52);
 
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`Nombre: ${data.unidad.nombre_de_la_unidad}`, 14, 62);
-        doc.text(`Ámbito: ${data.unidad.ambito || 'N/A'}`, 14, 68);
-        doc.text(`Fecha de Emisión: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`, 14, 74);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Período de Préstamo:', 15, 59);
+    doc.setFont('helvetica', 'normal');
+    // Adaptación para diferentes nombres de campos (creación vs visualización)
+    const fInit = pedido.fecha_inicio || pedido.fechaInicio;
+    const fEnd = pedido.fecha_fin || pedido.fechaFin;
+    doc.text(`Desde ${fInit || 'N/A'} hasta ${fEnd || 'N/A'}`, 60, 59);
 
-        let currentY = 85;
+    // Tabla de Elementos
+    const tableData = items.map(item => [
+      item.cantidad,
+      item.componente || item.nombre,
+      item.equipo || 'N/A'
+    ]);
 
-        // RECORRIDO DE EQUIPOS Y COMPONENTES
-        data.equipos.forEach((item, index) => {
-            // Título del Equipo
-            doc.setFontSize(13);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(azulInstitucional[0], azulInstitucional[1], azulInstitucional[2]);
-            doc.text(`EQUIPO: ${item.equipo || 'Sin Nombre'} (ID: ${item.codigo_equipo})`, 14, currentY);
+    autoTable(doc, {
+      startY: 70,
+      head: [['Cantidad', 'Componente / Material', 'Equipo / Origen']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { fillColor: [26, 58, 143], textColor: [255, 255, 255] },
+      styles: { fontSize: 9, cellPadding: 4 }
+    });
 
-            currentY += 5;
-
-            // Tabla de Componentes del Equipo
-            const tableData = item.componentes.map(c => [
-                c.codigo_componente.toString(),
-                c.componente,
-                c.serie || '-',
-                c.total || '-',
-                c.Nro_alta || '-'
-            ]);
-
-            autoTable(doc, {
-                startY: currentY,
-                head: [['CÓDIGO', 'COMPONENTE', 'SERIE', 'CANTIDAD', 'NRO_ALTA']],
-                body: tableData,
-                theme: 'striped',
-                headStyles: {
-                    fillColor: [26, 58, 143],
-                    textColor: [255, 255, 255],
-                    fontSize: 9,
-                    fontStyle: 'bold'
-                },
-                styles: { fontSize: 8, cellPadding: 3 },
-                margin: { left: 14, right: 14 },
-                didDrawPage: (data) => {
-                    currentY = data.cursor!.y + 15;
-                }
-            });
-
-            // Si nos pasamos de la página, autoTable ya maneja el salto, pero currentY debe actualizarse
-            // Usamos el cursor del hook de autoTable para seguir escribiendo abajo.
-            if (currentY > 270) {
-                doc.addPage();
-                currentY = 20;
-            }
-        });
-
-        // PIE DE PÁGINA
-        const pageCount = (doc as any).internal.getNumberOfPages();
-        for (let i = 1; i <= pageCount; i++) {
-            doc.setPage(i);
-            doc.setFontSize(10);
-            doc.setTextColor(150);
-            doc.text(`Página ${i} de ${pageCount}`, 105, 285, { align: 'center' });
-            doc.text('Documento generado institucionalmente por Misiones Programa', 105, 290, { align: 'center' });
-        }
-
-        // DESCARGAR
-        doc.save(`Informe_${data.unidad.unidad.replace(/\s+/g, '_')}_${new Date().getTime()}.pdf`);
+    // Observaciones
+    const finalY = (doc as any).lastAutoTable.finalY + 15;
+    if (pedido.observaciones) {
+      doc.setFont('helvetica', 'bold');
+      doc.text('Observaciones:', 15, finalY);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      const splitObs = doc.splitTextToSize(pedido.observaciones, 180);
+      doc.text(splitObs, 15, finalY + 7);
     }
+
+    // Firmas
+    const pageHeight = doc.internal.pageSize.height;
+    doc.setFontSize(10);
+    doc.line(30, pageHeight - 40, 80, pageHeight - 40);
+    doc.text('Firma Entrega', 55, pageHeight - 35, { align: 'center' });
+    doc.text('Bn. Com. Nro 2', 55, pageHeight - 30, { align: 'center' });
+
+    doc.line(130, pageHeight - 40, 180, pageHeight - 40);
+    doc.text('Firma Recepción', 155, pageHeight - 35, { align: 'center' });
+    doc.text(nombreDestino, 155, pageHeight - 30, { align: 'center' });
+
+    // Guardar
+    doc.save(`Recibo_Pedido_${pedido.idpedido}.pdf`);
+  }
+
+  exportUnidadAgrupada(agrupada: any): void {
+    const doc = new jsPDF();
+    const unidad = agrupada.unidad;
+    const equipos = agrupada.equipos || [];
+
+    // Cabecera
+    doc.setFontSize(18);
+    doc.setTextColor(26, 58, 143);
+    doc.text('INFORME TÉCNICO DE UNIDAD', 105, 20, { align: 'center' });
+
+    doc.setFontSize(14);
+    doc.setTextColor(0);
+    doc.text(unidad.nombre_de_la_unidad || 'Sin Nombre', 105, 30, { align: 'center' });
+
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Fecha de Reporte: ${new Date().toLocaleDateString()}`, 190, 10, { align: 'right' });
+
+    let currentY = 40;
+
+    equipos.forEach((eq: any, index: number) => {
+      // Verificar si necesitamos nueva página
+      if (currentY > 250) {
+        doc.addPage();
+        currentY = 20;
+      }
+
+      doc.setFontSize(11);
+      doc.setTextColor(26, 58, 143);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`EQUIPO: ${eq.equipo || 'N/A'}`, 15, currentY);
+      
+      const tableData = (eq.componentes || []).map((c: any) => [
+        c.componente,
+        c.serie || '-',
+        c.total || '-',
+        c.estado || '-',
+        c.ubicacion || '-'
+      ]);
+
+      autoTable(doc, {
+        startY: currentY + 5,
+        head: [['Componente', 'Serie', 'Cant.', 'Estado', 'Ubicación']],
+        body: tableData,
+        theme: 'grid',
+        headStyles: { fillColor: [70, 70, 70], textColor: [255, 255, 255] },
+        styles: { fontSize: 8 },
+        margin: { left: 15, right: 15 }
+      });
+
+      currentY = (doc as any).lastAutoTable.finalY + 15;
+    });
+
+    const fileName = `Informe_${(unidad.nombre_de_la_unidad || 'Unidad').replace(/\s+/g, '_')}.pdf`;
+    doc.save(fileName);
+  }
 }

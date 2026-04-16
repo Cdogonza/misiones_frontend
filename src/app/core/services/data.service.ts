@@ -79,8 +79,8 @@ export class DataService {
     }
 
     // PEDIDOS
-    createPedido(idusuario: number, items: any[], observaciones: string): Observable<any> {
-        return this.http.post<any>(this.PEDIDOS_API, { idusuario, items, observaciones });
+    createPedido(idusuario: number, items: any[], observaciones: string, config?: { codigo_unidad_destino?: number, fecha_inicio?: string, fecha_fin?: string }): Observable<any> {
+        return this.http.post<any>(this.PEDIDOS_API, { idusuario, items, observaciones, ...config });
     }
 
     getAllPedidos(): Observable<any[]> {

@@ -3,7 +3,7 @@
         <div class="sidebar-header">
             <img src="logo.png" alt="Logo" class="mini-logo" />
             <div class="header-text">
-                <h2>Misiones</h2>
+                <h2>Bn. Com. N° 2</h2>
                 <p>Programa</p>
             </div>
         </div>
@@ -77,9 +77,35 @@
 
                     <!-- Panel de confirmación -->
                     <div class="confirm-panel animate-fade-in">
-                        <div class="form-group">
-                            <label>Observaciones del Pedido</label>
-                            <textarea [(ngModel)]="observaciones" placeholder="Escribe aquí cualquier indicación o aclaración necesaria..."></textarea>
+                        <div class="form-card animate-fade-in">
+                            <h3>Configuración del Préstamo</h3>
+                            
+                            <div class="config-grid">
+                                <div class="form-group">
+                                    <label>Unidad Destino</label>
+                                    <select [(ngModel)]="selectedUnidadDestino" class="form-select">
+                                        <option [ngValue]="null">Seleccione una unidad...</option>
+                                        @for (u of unidades; track u.codigo_unidad) {
+                                            <option [ngValue]="u.codigo_unidad">{{ u.nombre_de_la_unidad }}</option>
+                                        }
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Fecha Inicio</label>
+                                    <input type="date" [(ngModel)]="fechaInicio" class="form-input" />
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Fecha Fin</label>
+                                    <input type="date" [(ngModel)]="fechaFin" class="form-input" />
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Observaciones del Pedido</label>
+                                <textarea [(ngModel)]="observaciones" placeholder="Escribe aquí cualquier indicación o aclaración necesaria..."></textarea>
+                            </div>
                         </div>
 
                         <div class="summary-info">

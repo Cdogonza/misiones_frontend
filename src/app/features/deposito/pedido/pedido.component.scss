@@ -169,18 +169,52 @@ $primary-dark: #1a3a8f; // Azul Rey
     .form-group {
         margin-bottom: 24px;
         label { display: block; margin-bottom: 10px; font-weight: 600; color: $accent; }
-        textarea {
+        
+        textarea, .form-select, .form-input {
             width: 100%;
-            height: 120px;
             background: rgba(0, 0, 0, 0.2);
             border: 1px solid $glass-border;
             border-radius: 12px;
             padding: 12px;
             color: #fff;
-            resize: none;
             outline: none;
-            &:focus { border-color: $accent; }
+            transition: all 0.3s;
+            font-family: inherit;
+
+            &:focus { 
+                border-color: $accent;
+                background: rgba(0, 0, 0, 0.3);
+                box-shadow: 0 0 0 3px rgba($accent, 0.1);
+            }
         }
+
+        textarea {
+            height: 100px;
+            resize: none;
+        }
+
+        .form-select {
+            cursor: pointer;
+            option { background: $primary-dark; color: #fff; }
+        }
+    }
+
+    .form-card {
+        h3 {
+            font-size: 1.1rem;
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: #fff;
+            border-left: 3px solid $accent;
+            padding-left: 12px;
+        }
+    }
+
+    .config-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+        margin-bottom: 16px;
     }
 }
 

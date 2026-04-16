@@ -29,6 +29,7 @@ export class DepositoComponent implements OnInit {
   isCartModalOpen = false;
   selectedComponentForCart: Componente | null = null;
   cartQuantity = 1;
+  quantityOptions: number[] = [];
 
   constructor(
     public auth: AuthService,
@@ -123,14 +124,21 @@ export class DepositoComponent implements OnInit {
 
   // Lógica de Carrito
   openCartModal(c: Componente): void {
+    const stock = c.total || 0;
+    if (stock <= 0) {
+      alert('Sin stock disponible para este componente.');
+      return;
+    }
     this.selectedComponentForCart = c;
     this.cartQuantity = 1;
+    this.quantityOptions = Array.from({ length: stock }, (_, i) => i + 1);
     this.isCartModalOpen = true;
   }
 
   closeCartModal(): void {
     this.isCartModalOpen = false;
     this.selectedComponentForCart = null;
+    this.quantityOptions = [];
   }
 
   confirmAddToCart(): void {
@@ -153,6 +161,10 @@ export class DepositoComponent implements OnInit {
 
   onProfileClick(): void {
     this.router.navigate(['/dashboard/profile']);
+  }
+
+  onGestionarPedidos(): void {
+    this.router.navigate(['/deposito/gestion']);
   }
 
   logout(): void {

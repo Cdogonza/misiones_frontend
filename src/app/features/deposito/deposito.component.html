@@ -4,7 +4,7 @@
         <div class="sidebar-header">
             <img src="logo.png" alt="Logo" class="mini-logo" />
             <div class="header-text">
-                <h2>Misiones</h2>
+                <h2>Bn. Com. N° 2</h2>
                 <p>Programa</p>
             </div>
         </div>
@@ -18,6 +18,9 @@
                 @if (cartService.totalUniqueItems > 0) {
                     <span class="cart-badge">{{ cartService.totalItemsCount }}</span>
                 }
+            </button>
+            <button class="nav-item" (click)="onGestionarPedidos()">
+                <span class="icon">📋</span> Gestión Pedidos
             </button>
             <div class="nav-divider"></div>
             <p class="nav-hint">Gestión de Inventario</p>
@@ -73,7 +76,7 @@
                             <th>Componente</th>
                             <th>Serie</th>
                             <th>Estado</th>
-                            <th>Clasificación</th>
+                            <th>Cantidad</th>
                             <th class="actions-col">Acciones</th>
                         </tr>
                     </thead>
@@ -84,9 +87,12 @@
                             <td>{{ c.componente }}</td>
                             <td>{{ c.serie || '-' }}</td>
                             <td><span class="badge" [attr.data-status]="c.estado">{{ c.estado }}</span></td>
-                            <td>{{ c.clasificacion || '-' }}</td>
+                            <td>{{ c.total || '-' }}</td>
                             <td class="actions-cell">
-                                <button class="btn-action cart" (click)="openCartModal(c)" title="Añadir al Pedido">🛒</button>
+                                <button class="btn-action cart" 
+                                        (click)="openCartModal(c)" 
+                                        [disabled]="(c.total || 0) <= 0"
+                                        [title]="(c.total || 0) <= 0 ? 'Sin stock' : 'Añadir al Pedido'">🛒</button>
                                 <button class="btn-action edit" (click)="onEdit(c)" title="Editar">✏️</button>
                                 <button class="btn-action delete" (click)="onDelete(c.codigo_componente)"
                                     title="Eliminar">🗑️</button>
@@ -126,7 +132,7 @@
                 <div class="quantity-selector">
                     <label>Cantidad:</label>
                     <select [(ngModel)]="cartQuantity">
-                        @for (n of [1,2,3,4,5,6,7,8,9,10]; track n) {
+                        @for (n of quantityOptions; track n) {
                             <option [value]="n">{{ n }}</option>
                         }
                     </select>

@@ -1,0 +1,156 @@
+<div class="gestion-container">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <img src="logo.png" alt="Logo" class="mini-logo" />
+            <div class="header-text">
+                <h2>Bn. Com. N° 2</h2>
+                <p>Programa</p>
+            </div>
+        </div>
+
+        <nav class="nav-menu">
+            <button class="nav-item" (click)="goBack()">
+                <span class="icon">📦</span> Inventario
+            </button>
+            <button class="nav-item active">
+                <span class="icon">📋</span> Gestión de Pedidos
+            </button>
+            <div class="nav-divider"></div>
+            <p class="nav-hint">Panel de Control</p>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="btn-logout" (click)="goBack()">
+                <span class="icon">⬅</span> Volver
+            </button>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="content-header">
+            <div class="title-group">
+                <h1>Gestión de Pedidos</h1>
+                <p>Monitoreo y administración de préstamos de componentes.</p>
+            </div>
+            
+            <div class="filter-tabs">
+                <button [class.active]="activeFilter === 'activos'" (click)="applyFilter('activos')">
+                    Activos <span>({{ countByFilter('activos') }})</span>
+                </button>
+                <button [class.active]="activeFilter === 'inactivos'" (click)="applyFilter('inactivos')">
+                    Inactivos <span>({{ countByFilter('inactivos') }})</span>
+                </button>
+            </div>
+        </header>
+
+        <div class="content-body">
+            @if (loading) {
+                <div class="loader-container">
+                    <div class="spinner"></div>
+                    <p>Cargando historial...</p>
+                </div>
+            } @else {
+                <div class="table-card animate-fade-in">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>FECHA</th>
+                                <th>DESTINO</th>
+                                <th>ESTADO</th>
+                                <th>USUARIO</th>
+                                <th class="actions-col">ACCIONES</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (pedido of filteredPedidos; track pedido.idpedido) {
+                                <tr>
+                                    <td>{{ pedido.fecha_inicio | date:'dd/MM/yyyy' }}</td>
+                                    <td>
+                                        <div class="dest-cell">
+                                            <strong>{{ pedido.unidad_destino_nombre || 'Interno' }}</strong>
+                                            <span>{{ pedido.fecha_inicio | date:'dd/MM' }} al {{ pedido.fecha_fin | date:'dd/MM' }}</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge" [ngClass]="getEstadoClass(pedido.estado)">
+                                            {{ pedido.estado | uppercase }}
+                                        </span>
+                                    </td>
+                                    <td>{{ pedido.usuario }}</td>
+                                    <td class="actions-cell">
+                                        <div class="btn-group">
+                                            <button class="btn-icon" (click)="viewDetails(pedido)" title="Ver detalles">🔍</button>
+                                            <button class="btn-icon" (click)="descargarPdf(pedido)" title="Descargar PDF">📄</button>
+                                            
+                                            @if (pedido.estado !== 'devuelto' && pedido.estado !== 'rechazado') {
+                                                <button class="btn-icon status-toggle" (click)="cambiarEstado(pedido, 'devuelto')" title="Marcar como Devuelto">✅</button>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            } @empty {
+                                <tr>
+                                    <td colspan="5" class="empty-msg">No se encontraron pedidos en esta categoría.</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </main>
+
+    <!-- Modal de Detalles -->
+    @if (selectedPedido) {
+        <div class="modal-backdrop" (click)="closeDetails()">
+            <div class="modal-content" (click)="$event.stopPropagation()">
+                <header class="modal-header">
+                    <h3>Detalle del Pedido #{{ selectedPedido.idpedido }}</h3>
+                    <button class="btn-close" (click)="closeDetails()">×</button>
+                </header>
+                
+                <div class="modal-body">
+                    <div class="detail-grid">
+                        <div class="info-item">
+                            <label>Unidad Destino</label>
+                            <p>{{ selectedPedido.unidad_destino_nombre || 'N/A' }}</p>
+                        </div>
+                        <div class="info-item">
+                            <label>Periodo</label>
+                            <p>{{ selectedPedido.fecha_inicio | date:'dd/MM/yyyy' }} al {{ selectedPedido.fecha_fin | date:'dd/MM/yyyy' }}</p>
+                        </div>
+                        <div class="info-item full">
+                            <label>Observaciones</label>
+                            <p>{{ selectedPedido.observaciones || 'Sin observaciones' }}</p>
+                        </div>
+                    </div>
+
+                    <div class="components-list">
+                        <h4>Componentes Solicitados</h4>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Cant.</th>
+                                    <th>Descripción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (item of selectedPedido.detalle; track item.iddetalle) {
+                                    <tr>
+                                        <td class="qty">{{ item.cantidad }}</td>
+                                        <td>{{ item.componente }}</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <footer class="modal-footer">
+                    <button class="btn-secondary" (click)="descargarPdf(selectedPedido)">Generar Recibo PDF</button>
+                    <button class="btn-primary" (click)="closeDetails()">Cerrar</button>
+                </footer>
+            </div>
+        </div>
+    }
+</div>
