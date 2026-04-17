@@ -124,9 +124,11 @@ export class DepositoComponent implements OnInit {
 
   // Lógica de Carrito
   openCartModal(c: Componente): void {
-    const stock = c.total || 0;
+    const inCart = this.getQuantityInCart(c.codigo_componente);
+    const stock = (c.total || 0) - inCart;
+    
     if (stock <= 0) {
-      alert('Sin stock disponible para este componente.');
+      alert('Has alcanzado el límite de stock disponible para este componente en tu pedido.');
       return;
     }
     this.selectedComponentForCart = c;
@@ -147,6 +149,7 @@ export class DepositoComponent implements OnInit {
         componentId: this.selectedComponentForCart.codigo_componente,
         nombre: this.selectedComponentForCart.componente,
         equipo: this.selectedComponentForCart.equipo || 'N/A',
+        serie: this.selectedComponentForCart.serie || '-',
         cantidad: this.cartQuantity
       };
       this.cartService.addToCart(item);
@@ -170,5 +173,14 @@ export class DepositoComponent implements OnInit {
   logout(): void {
     this.auth.logout();
     this.router.navigate(['/login']);
+  }
+
+  getQuantityInCart(componentId: number): number {
+    // Suscripción o acceso directo al valor actual del BehaviorSubject vía getter
+    return this.cartService.getQuantityById(componentId);
+  }
+
+  getAvailableStock(c: Componente): number {
+    return (c.total || 0) - this.getQuantityInCart(c.codigo_componente);
   }
 }

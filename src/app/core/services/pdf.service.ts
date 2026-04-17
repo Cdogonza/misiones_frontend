@@ -58,12 +58,13 @@ export class PdfService {
     const tableData = items.map(item => [
       item.cantidad,
       item.componente || item.nombre,
+      item.serie || '-',
       item.equipo || 'N/A'
     ]);
 
     autoTable(doc, {
       startY: 70,
-      head: [['Cantidad', 'Componente / Material', 'Equipo / Origen']],
+      head: [['Cantidad', 'Componente / Material', 'Serie', 'Equipo / Origen']],
       body: tableData,
       theme: 'grid',
       headStyles: { fillColor: [26, 58, 143], textColor: [255, 255, 255] },

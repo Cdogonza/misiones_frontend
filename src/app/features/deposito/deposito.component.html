@@ -87,12 +87,12 @@
                             <td>{{ c.componente }}</td>
                             <td>{{ c.serie || '-' }}</td>
                             <td><span class="badge" [attr.data-status]="c.estado">{{ c.estado }}</span></td>
-                            <td>{{ c.total || '-' }}</td>
+                            <td>{{ getAvailableStock(c) }}</td>
                             <td class="actions-cell">
                                 <button class="btn-action cart" 
                                         (click)="openCartModal(c)" 
-                                        [disabled]="(c.total || 0) <= 0"
-                                        [title]="(c.total || 0) <= 0 ? 'Sin stock' : 'Añadir al Pedido'">🛒</button>
+                                        [disabled]="getAvailableStock(c) <= 0"
+                                        [title]="getAvailableStock(c) <= 0 ? 'Sin stock disponible' : 'Añadir al Pedido'">🛒</button>
                                 <button class="btn-action edit" (click)="onEdit(c)" title="Editar">✏️</button>
                                 <button class="btn-action delete" (click)="onDelete(c.codigo_componente)"
                                     title="Eliminar">🗑️</button>

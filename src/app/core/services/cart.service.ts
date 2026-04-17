@@ -38,4 +38,9 @@ export class CartService {
   get totalUniqueItems(): number {
     return this.cartItems.value.length;
   }
+
+  getQuantityById(componentId: number): number {
+    const item = this.cartItems.value.find(i => i.componentId === componentId);
+    return item ? item.cantidad : 0;
+  }
 }

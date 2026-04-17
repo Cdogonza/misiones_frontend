@@ -46,5 +46,6 @@ export interface CartItem {
     componentId: number;
     nombre: string;
     equipo: string;
+    serie?: string;
     cantidad: number;
 }
