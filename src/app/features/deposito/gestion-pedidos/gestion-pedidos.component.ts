@@ -19,6 +19,17 @@ export class GestionPedidosComponent implements OnInit {
   loading = false;
   selectedPedido: any = null;
   unidades: any[] = [];
+  allComponents: any[] = []; // Para poder agregar nuevos items al editar
+
+  // Edición
+  isEditing = false;
+  editForm = {
+    codigo_unidad_destino: null as number | null,
+    fecha_inicio: '',
+    fecha_fin: '',
+    observaciones: '',
+    items: [] as any[]
+  };
 
   constructor(
     private dataService: DataService,
@@ -34,6 +45,9 @@ export class GestionPedidosComponent implements OnInit {
   loadData(): void {
     // Necesitamos las unidades para algunos mapeos locales si el backend no los trae todos
     this.dataService.getUnidades().subscribe(u => this.unidades = u);
+    
+    // Necesitamos los componentes para poder agregarlos al editar un pedido
+    this.dataService.getComponentes().subscribe(c => this.allComponents = c);
 
     this.dataService.getAllPedidos().subscribe({
       next: (data) => {
@@ -99,6 +113,86 @@ export class GestionPedidosComponent implements OnInit {
       return;
     }
     this.pdfService.generateReceiptPDF(pedido, pedido.detalle, this.unidades);
+  }
+
+  // --- MÉTODOS DE EDICIÓN ---
+  startEdit(pedido: any): void {
+    this.isEditing = true;
+    this.selectedPedido = pedido;
+    
+    // Mapear fechas para el input de tipo date (YYYY-MM-DD)
+    const formatDate = (d: any) => {
+        if (!d) return '';
+        const date = new Date(d);
+        return date.toISOString().split('T')[0];
+    };
+
+    this.editForm = {
+      codigo_unidad_destino: pedido.codigo_unidad_destino,
+      fecha_inicio: formatDate(pedido.fecha_inicio),
+      fecha_fin: formatDate(pedido.fecha_fin),
+      observaciones: pedido.observaciones || '',
+      items: JSON.parse(JSON.stringify(pedido.detalle || [])) // Clonar items
+    };
+  }
+
+  removeItemFromEdit(index: number): void {
+    this.editForm.items.splice(index, 1);
+  }
+
+  addItemToEdit(comp: any): void {
+    // Evitar duplicados
+    const exists = this.editForm.items.find(i => i.codigo_componente === comp.codigo_componente);
+    if (exists) {
+        exists.cantidad++;
+    } else {
+        this.editForm.items.push({
+            codigo_componente: comp.codigo_componente,
+            componente: comp.componente,
+            cantidad: 1
+        });
+    }
+  }
+
+  addItemFromSelector(codigoComp: any): void {
+    if (!codigoComp) return;
+    const comp = this.allComponents.find(c => c.codigo_componente === Number(codigoComp));
+    if (comp) {
+        this.addItemToEdit(comp);
+    }
+  }
+
+  cancelEdit(): void {
+    this.isEditing = false;
+    this.selectedPedido = null;
+  }
+
+  guardarCambios(): void {
+    if (!this.selectedPedido) return;
+    if (!this.editForm.codigo_unidad_destino || !this.editForm.fecha_inicio || !this.editForm.fecha_fin) {
+        alert('Por favor, complete los campos obligatorios.');
+        return;
+    }
+
+    if (this.editForm.items.length === 0) {
+        alert('El pedido debe tener al menos un componente.');
+        return;
+    }
+
+    this.loading = true;
+    this.dataService.updatePedido(this.selectedPedido.idpedido, this.editForm).subscribe({
+      next: () => {
+        alert('Pedido actualizado con éxito.');
+        this.isEditing = false;
+        this.selectedPedido = null;
+        this.loadData();
+      },
+      error: (err) => {
+        console.error('Error al actualizar pedido:', err);
+        alert('Hubo un error al guardar los cambios.');
+        this.loading = false;
+      }
+    });
   }
 
   goBack(): void {

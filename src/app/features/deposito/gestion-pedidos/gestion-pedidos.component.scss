@@ -135,6 +135,67 @@ $primary-dark: #1a3a8f;
     .btn-secondary { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid $glass-border; padding: 12px 24px; border-radius: 8px; cursor: pointer; }
 }
 
+// Estilos específicos para el Modal de Edición
+.edit-modal {
+    width: 650px;
+    .edit-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            
+            &.full-width { grid-column: span 2; }
+            
+            label { font-size: 0.85rem; color: $accent; font-weight: 600; }
+            
+            .form-input, .form-select, .form-textarea {
+                background: rgba(0,0,0,0.2);
+                border: 1px solid $glass-border;
+                padding: 12px;
+                border-radius: 8px;
+                color: #fff;
+                font-family: inherit;
+                
+                &:focus { outline: none; border-color: $accent; box-shadow: 0 0 0 2px rgba($accent, 0.2); }
+            }
+            
+            .form-textarea { min-height: 100px; resize: vertical; }
+        }
+    }
+
+    .edit-items-section {
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid $glass-border;
+        
+        h4 { color: $accent; margin-bottom: 20px; }
+        
+        .add-item-control {
+            display: flex; gap: 10px; margin-bottom: 20px;
+            .form-select { flex: 1; min-width: 0; background: rgba(0,0,0,0.2); border: 1px solid $glass-border; padding: 10px; border-radius: 8px; color: #fff; }
+            .btn-add-item { background: transparent; border: 1px solid $accent; color: $accent; padding: 0 20px; border-radius: 8px; cursor: pointer; transition: 0.3s; &:hover { background: $accent; color: $primary-dark; } }
+        }
+        
+        .edit-items-table {
+            width: 100%; border-collapse: collapse;
+            th { text-align: left; font-size: 0.8rem; padding: 10px; color: rgba(255,255,255,0.6); }
+            td { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        }
+        
+        .qty-control {
+            display: flex; align-items: center; gap: 8px;
+            button { width: 28px; height: 28px; border-radius: 4px; border: 1px solid $glass-border; background: rgba(255,255,255,0.05); color: #fff; cursor: pointer; &:hover { border-color: $accent; color: $accent; } }
+            input { width: 45px; text-align: center; background: transparent; border: 1px solid $glass-border; border-radius: 4px; color: #fff; padding: 4px; }
+        }
+        
+        .btn-remove-item { background: transparent; border: none; font-size: 1.1rem; cursor: pointer; padding: 5px; &:hover { transform: scale(1.2); } }
+    }
+}
+
 .loader-container { padding: 60px; text-align: center; .spinner { width: 50px; height: 50px; border: 4px solid rgba($accent, 0.2); border-top-color: $accent; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; } }
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }

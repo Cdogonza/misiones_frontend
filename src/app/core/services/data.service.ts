@@ -94,4 +94,8 @@ export class DataService {
     updatePedidoEstado(idpedido: number, estado: string): Observable<any> {
         return this.http.patch<any>(`${this.PEDIDOS_API}/${idpedido}/estado`, { estado });
     }
+
+    updatePedido(idpedido: number, data: any): Observable<any> {
+        return this.http.patch<any>(`${this.PEDIDOS_API}/${idpedido}`, data);
+    }
 }

@@ -168,7 +168,10 @@ $primary-dark: #1a3a8f; // Azul Rey
 
     .form-group {
         margin-bottom: 24px;
-        label { display: block; margin-bottom: 10px; font-weight: 600; color: $accent; }
+        label { 
+            display: block; margin-bottom: 10px; font-weight: 600; color: $accent; 
+            .required { color: #f44336; margin-left: 4px; font-weight: bold; }
+        }
         
         textarea, .form-select, .form-input {
             width: 100%;

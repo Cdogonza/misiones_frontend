@@ -62,6 +62,12 @@ export class PedidoComponent implements OnInit {
 
   confirmarPedido(): void {
     if (this.cartItems.length === 0) return;
+
+    if (!this.selectedUnidadDestino || !this.fechaInicio || !this.fechaFin) {
+      alert('Por favor, complete todos los campos obligatorios: Unidad de Destino, Fecha de Inicio y Fecha de Fin.');
+      return;
+    }
+
     if (!confirm('¿Estás seguro de que deseas enviar este pedido?')) return;
 
     this.loading = true;
