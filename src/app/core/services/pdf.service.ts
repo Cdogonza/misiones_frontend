@@ -9,26 +9,30 @@ export class PdfService {
 
   constructor() { }
 
-  generateReceiptPDF(pedido: any, items: any[], unidades: any[]): void {
+  generateReceiptPDF(pedido: any, items: any[], unidades: any[], type: 'entrega' | 'recepcion' = 'entrega'): void {
     const doc = new jsPDF();
     const dateStr = pedido.created_at ? new Date(pedido.created_at).toLocaleDateString() : new Date().toLocaleDateString();
     
     // Buscar nombre de unidad destino
-    // El pedido puede traer el nombre directamente si el backend hizo el JOIN,
-    // o lo buscamos en la lista de unidades enviada.
     const nombreDestino = pedido.unidad_destino_nombre || 
                          unidades.find(u => u.codigo_unidad === pedido.codigo_unidad_destino)?.nombre_de_la_unidad || 
                          'N/A';
 
+    // Configuración según tipo
+    const title = type === 'entrega' ? 'RECIBO DE ENTREGA DE MATERIAL' : 'RECIBO DE RECEPCIÓN DE MATERIAL';
+    const giverName = type === 'entrega' ? 'Bn. Com. Nro 2' : nombreDestino;
+    const receiverName = type === 'entrega' ? nombreDestino : 'Bn. Com. Nro 2';
+    const observations = type === 'entrega' ? pedido.observaciones : (pedido.observaciones_devolucion || 'Sin observaciones de recepción');
+
     // Cabecera institucional
     doc.setFontSize(18);
     doc.setTextColor(26, 58, 143); // Azul institucional
-    doc.text('RECIBO DE PEDIDO DE MATERIAL', 105, 20, { align: 'center' });
+    doc.text(title, 105, 20, { align: 'center' });
     
     doc.setFontSize(10);
     doc.setTextColor(100);
-    doc.text(`Fecha de Pedido: ${dateStr}`, 190, 10, { align: 'right' });
-    doc.text(`Nro. Pedido interno: #${pedido.idpedido}`, 190, 15, { align: 'right' });
+    doc.text(`Fecha: ${dateStr}`, 190, 10, { align: 'right' });
+    doc.text(`Nro. Pedido: #${pedido.idpedido}`, 190, 15, { align: 'right' });
 
     // Información del Préstamo
     doc.setFontSize(11);
@@ -39,17 +43,16 @@ export class PdfService {
     doc.setFont('helvetica', 'bold');
     doc.text('Unidad que Entrega:', 15, 45);
     doc.setFont('helvetica', 'normal');
-    doc.text('Bn. Com. Nro 2', 60, 45);
+    doc.text(giverName, 60, 45);
 
     doc.setFont('helvetica', 'bold');
     doc.text('Unidad que Recibe:', 15, 52);
     doc.setFont('helvetica', 'normal');
-    doc.text(nombreDestino, 60, 52);
+    doc.text(receiverName, 60, 52);
 
     doc.setFont('helvetica', 'bold');
     doc.text('Período de Préstamo:', 15, 59);
     doc.setFont('helvetica', 'normal');
-    // Adaptación para diferentes nombres de campos (creación vs visualización)
     const fInit = pedido.fecha_inicio || pedido.fechaInicio;
     const fEnd = pedido.fecha_fin || pedido.fechaFin;
     doc.text(`Desde ${fInit || 'N/A'} hasta ${fEnd || 'N/A'}`, 60, 59);
@@ -73,12 +76,12 @@ export class PdfService {
 
     // Observaciones
     const finalY = (doc as any).lastAutoTable.finalY + 15;
-    if (pedido.observaciones) {
+    if (observations) {
       doc.setFont('helvetica', 'bold');
-      doc.text('Observaciones:', 15, finalY);
+      doc.text(type === 'entrega' ? 'Observaciones de Entrega:' : 'Observaciones de Recepción:', 15, finalY);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9);
-      const splitObs = doc.splitTextToSize(pedido.observaciones, 180);
+      const splitObs = doc.splitTextToSize(observations, 180);
       doc.text(splitObs, 15, finalY + 7);
     }
 
@@ -87,14 +90,15 @@ export class PdfService {
     doc.setFontSize(10);
     doc.line(30, pageHeight - 40, 80, pageHeight - 40);
     doc.text('Firma Entrega', 55, pageHeight - 35, { align: 'center' });
-    doc.text('Bn. Com. Nro 2', 55, pageHeight - 30, { align: 'center' });
+    doc.text(giverName, 55, pageHeight - 30, { align: 'center' });
 
     doc.line(130, pageHeight - 40, 180, pageHeight - 40);
     doc.text('Firma Recepción', 155, pageHeight - 35, { align: 'center' });
-    doc.text(nombreDestino, 155, pageHeight - 30, { align: 'center' });
+    doc.text(receiverName, 155, pageHeight - 30, { align: 'center' });
 
     // Guardar
-    doc.save(`Recibo_Pedido_${pedido.idpedido}.pdf`);
+    const fileName = type === 'entrega' ? `Boleta_Entrega_${pedido.idpedido}.pdf` : `Boleta_Recepcion_${pedido.idpedido}.pdf`;
+    doc.save(fileName);
   }
 
   exportUnidadAgrupada(agrupada: any): void {

@@ -147,4 +147,20 @@ export class AuthService {
             return null;
         }
     }
+
+    /** Devuelve true si el usuario pertenece a una oficina de jefatura
+     *  con acceso dual (dashboard + deposito): Jefe, 2do Jefe, Cte. de Ca. */
+    isJefatura(): boolean {
+        const oficina = this.getUserOficina();
+        if (!oficina) return false;
+        const o = oficina.trim().toLowerCase();
+        return (
+            o === 'jefe' ||
+            o === '2do jefe' ||
+            o === 'cte. de ca.' ||
+            o === 'Cte. de Ca.' ||
+            o === 'Jefe de Seccion Abast.' ||
+            o === 'Jefe de Seccion Mant.'
+        );
+    }
 }

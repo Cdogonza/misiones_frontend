@@ -91,8 +91,8 @@ export class DataService {
         return this.http.get<any[]>(`${this.PEDIDOS_API}/usuario/${idusuario}`);
     }
 
-    updatePedidoEstado(idpedido: number, estado: string): Observable<any> {
-        return this.http.patch<any>(`${this.PEDIDOS_API}/${idpedido}/estado`, { estado });
+    updatePedidoEstado(idpedido: number, estado: string, observaciones_devolucion?: string): Observable<any> {
+        return this.http.patch<any>(`${this.PEDIDOS_API}/${idpedido}/estado`, { estado, observaciones_devolucion });
     }
 
     updatePedido(idpedido: number, data: any): Observable<any> {

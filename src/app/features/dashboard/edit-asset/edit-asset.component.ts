@@ -19,6 +19,7 @@ export class EditAssetComponent implements OnInit {
     id: number = 0;
     loading = true;
     saving = false;
+    returnUrl: string | null = null;
 
     // Data models
     equipo: Partial<Equipo> = {};
@@ -45,6 +46,10 @@ export class EditAssetComponent implements OnInit {
     ) { }
 
     ngOnInit(): void {
+        this.route.queryParams.subscribe(queryParams => {
+            this.returnUrl = queryParams['from'] || null;
+        });
+
         this.route.params.subscribe(params => {
             this.type = params['type'] as any;
             this.id = +params['id'];
@@ -66,7 +71,7 @@ export class EditAssetComponent implements OnInit {
     initNew(): void {
         this.loading = false;
         this.equipo = {};
-        this.componente = { estado: 'Bueno' };
+        this.componente = { estado: 'Bueno', total: 1 };
         this.unidad = {};
     }
 
@@ -251,6 +256,11 @@ export class EditAssetComponent implements OnInit {
     }
 
     cancel(): void {
+        if (this.returnUrl) {
+            this.router.navigate(['/' + this.returnUrl]);
+            return;
+        }
+
         const oficina = this.auth.getUserOficina();
         if (oficina?.toLowerCase() === 'deposito') {
             this.router.navigate(['/deposito']);

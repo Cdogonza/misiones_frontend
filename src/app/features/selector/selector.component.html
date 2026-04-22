@@ -1,0 +1,46 @@
+<section class="selector-wrapper">
+
+  <!-- Destellos decorativos -->
+  <div class="glow glow-top"></div>
+  <div class="glow glow-bottom"></div>
+
+  <div class="selector-card">
+
+    <!-- Header -->
+    <div class="selector-header">
+      <img src="logo.png" alt="Logo" class="logo-img" />
+      <h1>Bn. "Jura de la Constitución" Com. Nº2</h1>
+      <p class="subtitle">Bienvenido, <strong>{{ username }}</strong></p>
+      <p class="hint">Seleccioná el panel al que deseas acceder</p>
+    </div>
+
+    <!-- Botones de selección -->
+    <div class="panel-grid">
+
+      <button class="panel-btn inspecciones" (click)="goToInspecciones()">
+        <div class="panel-icon">📋</div>
+        <div class="panel-info">
+          <span class="panel-label">Inspecciones</span>
+          <span class="panel-desc">Gestión de unidades, equipos y componentes</span>
+        </div>
+        <span class="panel-arrow">→</span>
+      </button>
+
+      <button class="panel-btn deposito" (click)="goToDeposito()">
+        <div class="panel-icon">📦</div>
+        <div class="panel-info">
+          <span class="panel-label">Deposito</span>
+          <span class="panel-desc">Inventario y pedidos de materiales</span>
+        </div>
+        <span class="panel-arrow">→</span>
+      </button>
+
+    </div>
+
+    <!-- Salir -->
+    <button class="btn-logout" (click)="logout()">
+      <span>⬅</span> Cerrar sesión
+    </button>
+
+  </div>
+</section>

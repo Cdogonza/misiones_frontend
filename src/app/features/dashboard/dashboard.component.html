@@ -22,13 +22,19 @@
             <button class="nav-item" [class.active]="activeView === 'unidades'" (click)="switchView('unidades')">
                 <span class="icon">🏢</span> Unidades
             </button>
-        </nav>
-
-        <div class="sidebar-footer">
+            <div class="nav-divider"></div>
+       
+            @if (auth.isJefatura()) {
+            <button class="btn-switch-panel" (click)="goToSelector()">
+                <span class="icon">🔀</span> Cambiar Oficina
+            </button>
+            }
             <button class="btn-logout" (click)="logout()">
                 <span class="icon">⬅</span> Cerrar Sesión
             </button>
-        </div>
+        </nav>
+        
+       
     </aside>
 
     <!-- Main Content -->

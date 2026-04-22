@@ -1,10 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { DataService } from '../../core/services/data.service';
 import { CartService } from '../../core/services/cart.service';
+import { OrderEditService } from '../../core/services/order-edit.service';
 import { UserProfile } from '../../core/models/user.model';
 import { Componente, Unidad, CartItem } from '../../core/models/data.model';
 
@@ -31,16 +32,25 @@ export class DepositoComponent implements OnInit {
   cartQuantity = 1;
   quantityOptions: number[] = [];
 
+  // Modo Edición
+  editMode = false;
+
   constructor(
     public auth: AuthService,
     private dataService: DataService,
     public cartService: CartService,
-    private router: Router
+    public orderEditService: OrderEditService,
+    private router: Router,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
     this.initDepositoData();
     this.loadProfile();
+
+    this.route.queryParams.subscribe(params => {
+      this.editMode = params['editMode'] === 'true' && this.orderEditService.isActive;
+    });
   }
 
   loadProfile(): void {
@@ -55,8 +65,7 @@ export class DepositoComponent implements OnInit {
     this.dataService.getUnidades().subscribe({
       next: (unidades) => {
         this.depositoBaseUnit = unidades.find(u => 
-          u.nombre_de_la_unidad.toUpperCase() === 'DEPOSITO BASE' || 
-          u.unidad.toUpperCase() === 'DEPOSITO BASE'
+          u.unidad === 'DEPOSITO BASE'
         ) || null;
 
         if (this.depositoBaseUnit) {
@@ -88,7 +97,14 @@ export class DepositoComponent implements OnInit {
     const search = this.searchText.toLowerCase();
     return this.components.filter(c =>
       c.componente?.toLowerCase().includes(search) ||
-      c.serie?.toLowerCase().includes(search)
+      c.serie?.toLowerCase().includes(search) ||
+      c.equipo?.toLowerCase().includes(search) ||
+      c.Nro_alta?.toLowerCase().includes(search) ||
+      c.Nro_baja?.toLowerCase().includes(search) ||
+      c.lugar?.toLowerCase().includes(search) ||
+      c.ubicacion?.toLowerCase().includes(search) ||
+      c.clasificacion?.toLowerCase().includes(search) ||
+      c.observacion?.toLowerCase().includes(search)
     );
   }
 
@@ -99,11 +115,15 @@ export class DepositoComponent implements OnInit {
   }
 
   onNuevo(): void {
-    this.router.navigate(['/dashboard/edit', 'componente', 0]);
+    this.router.navigate(['/dashboard/edit', 'componente', 0], { queryParams: { from: 'deposito' } });
+  }
+
+  onNuevoEquipo(): void {
+    this.router.navigate(['/dashboard/edit', 'equipo', 0], { queryParams: { from: 'deposito' } });
   }
 
   onEdit(c: Componente): void {
-    this.router.navigate(['/dashboard/edit', 'componente', c.codigo_componente]);
+    this.router.navigate(['/dashboard/edit', 'componente', c.codigo_componente], { queryParams: { from: 'deposito' } });
   }
 
   onDelete(id: number): void {
@@ -152,9 +172,15 @@ export class DepositoComponent implements OnInit {
         serie: this.selectedComponentForCart.serie || '-',
         cantidad: this.cartQuantity
       };
-      this.cartService.addToCart(item);
+
+      if (this.editMode) {
+        this.orderEditService.addItem(item);
+        alert(`${item.nombre} añadido al pedido en edición.`);
+      } else {
+        this.cartService.addToCart(item);
+      }
+      
       this.closeCartModal();
-      // Notificación simple o feedback visual
     }
   }
 
@@ -170,14 +196,28 @@ export class DepositoComponent implements OnInit {
     this.router.navigate(['/deposito/gestion']);
   }
 
+  onVolverEdicion(): void {
+    this.router.navigate(['/deposito/gestion']);
+  }
+
+  goToSelector(): void {
+    this.router.navigate(['/selector']);
+  }
+
   logout(): void {
     this.auth.logout();
     this.router.navigate(['/login']);
   }
 
   getQuantityInCart(componentId: number): number {
-    // Suscripción o acceso directo al valor actual del BehaviorSubject vía getter
-    return this.cartService.getQuantityById(componentId);
+    let qty = this.cartService.getQuantityById(componentId);
+    
+    // Si estamos en modo edición, también debemos considerar lo que ya está en el formulario de edición
+    if (this.orderEditService.isActive) {
+      qty += this.orderEditService.getQuantityById(componentId);
+    }
+    
+    return qty;
   }
 
   getAvailableStock(c: Componente): number {

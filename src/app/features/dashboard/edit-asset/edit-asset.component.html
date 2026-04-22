@@ -52,6 +52,10 @@
                 <input type="text" [(ngModel)]="componente.serie" name="comp_serie" placeholder="S/N o Lote">
             </div>
             <div class="form-group">
+                <label>Cantidad (Total)</label>
+                <input type="number" [(ngModel)]="componente.total" name="comp_total" placeholder="1" min="1">
+            </div>
+            <div class="form-group">
                 <label>Unidad Asociada</label>
                 <select [(ngModel)]="componente.codigo_unidad" name="comp_unidad">
                     <option [ngValue]="null">Seleccione una unidad...</option>
