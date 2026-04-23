@@ -22,14 +22,17 @@
             <button class="nav-item" (click)="onGestionarPedidos()">
                 <span class="icon">📋</span> Gestión Pedidos
             </button>
+            <button class="nav-item" [routerLink]="['/mantenimiento']">
+                <span class="icon">🛠️</span> Mantenimiento
+            </button>
             <div class="nav-divider"></div>
-            <p class="nav-hint">Gestión de Inventario</p>
+                        <button class="btn-logout" (click)="logout()">
+                <span class="icon">⬅</span> Cerrar Sesión
+            </button>
         </nav>
 
         <div class="sidebar-footer">
-            <button class="btn-logout" (click)="logout()">
-                <span class="icon">⬅</span> Cerrar Sesión
-            </button>
+
         </div>
     </aside>
 
