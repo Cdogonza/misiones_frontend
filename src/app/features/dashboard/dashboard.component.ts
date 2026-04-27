@@ -65,9 +65,12 @@ export class DashboardComponent implements OnInit {
     // ── Ciclo de vida ──────────────────────────────────────────────────────
 
     ngOnInit(): void {
-        // Redirección si la oficina es deposito
+        // Redirección: solo forzar al depósito si la oficina es depósito puro
+        // Los usuarios de jefatura (Jefe, 2do Jefe, Cte. de Ca.) pueden acceder al dashboard.
         const oficina = this.auth.getUserOficina();
-        if (oficina?.toLowerCase().includes('deposito')) {
+        const esDeposito = oficina?.toLowerCase().includes('deposito');
+        const esJefatura = this.auth.isJefatura();
+        if (esDeposito && !esJefatura) {
             this.router.navigate(['/deposito']);
             return;
         }
@@ -178,11 +181,15 @@ export class DashboardComponent implements OnInit {
 
     onNuevo(): void {
         const type = this.activeView === 'unidades' ? 'unidad' : (this.activeView === 'equipos' ? 'equipo' : 'componente');
-        this.router.navigate(['/dashboard/edit', type, 0]);
+        this.router.navigate(['/dashboard/edit', type, 0], { queryParams: { from: 'dashboard' } });
     }
 
     onProfileClick(): void {
         this.router.navigate(['/dashboard/profile']);
+    }
+
+    goToSelector(): void {
+        this.router.navigate(['/selector']);
     }
 
     onSearch(): void {
@@ -251,7 +258,7 @@ export class DashboardComponent implements OnInit {
             entityType = item.codigo_componente ? 'componente' : (item.codigo_equipo ? 'equipo' : 'unidad');
         }
         const id = item.codigo_componente || item.codigo_equipo || item.codigo_unidad;
-        this.router.navigate(['/dashboard/edit', entityType, id]);
+        this.router.navigate(['/dashboard/edit', entityType, id], { queryParams: { from: 'dashboard' } });
     }
 
     onDelete(view: DashboardView, id: number): void {

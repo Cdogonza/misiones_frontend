@@ -135,6 +135,38 @@ $glass-border: rgba(255, 255, 255, 0.15);
     }
 }
 
+.nav-item.btn-switch {
+    color: #63cab7;
+    background: rgba(99, 202, 183, 0.08);
+    border: 1px solid rgba(99, 202, 183, 0.25);
+
+    &:hover {
+        background: rgba(99, 202, 183, 0.18);
+        color: #63cab7;
+        border-color: rgba(99, 202, 183, 0.5);
+    }
+}
+
+.nav-item.edit-session-btn {
+    color: $accent;
+    background: rgba($accent, 0.12);
+    border: 1px solid rgba($accent, 0.3);
+    margin-top: 10px;
+    font-weight: 700;
+    animation: pulse-border 2s infinite;
+
+    &:hover {
+        background: rgba($accent, 0.2);
+        transform: scale(1.02);
+    }
+}
+
+@keyframes pulse-border {
+    0% { border-color: rgba($accent, 0.3); }
+    50% { border-color: rgba($accent, 0.8); }
+    100% { border-color: rgba($accent, 0.3); }
+}
+
 /* MAIN CONTENT */
 .main-content {
     flex: 1;
@@ -167,6 +199,34 @@ $glass-border: rgba(255, 255, 255, 0.15);
             margin-top: 8px;
         }
     }
+
+    .edit-mode-badge {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: rgba($accent, 0.15);
+        color: $accent;
+        padding: 10px 20px;
+        border-radius: 30px;
+        border: 1px solid rgba($accent, 0.3);
+        font-weight: 700;
+        font-size: 0.9rem;
+        box-shadow: 0 0 20px rgba($accent, 0.1);
+
+        .icon {
+            font-size: 1.1rem;
+        }
+    }
+}
+
+.animate-pulse {
+    animation: pulse-soft 2s infinite ease-in-out;
+}
+
+@keyframes pulse-soft {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.02); opacity: 0.9; }
+    100% { transform: scale(1); opacity: 1; }
 }
 
 .user-info {
@@ -305,34 +365,98 @@ $glass-border: rgba(255, 255, 255, 0.15);
     padding: 24px;
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
     animation: fadeIn 0.4s ease both;
+    overflow-x: auto; // Soporte para muchas columnas
 }
 
 .data-table {
     width: 100%;
     border-collapse: collapse;
     text-align: left;
+    min-width: 1000px; // Ajustado para 10 columnas
 
     th {
         padding: 16px;
         border-bottom: 2px solid rgba($accent, 0.3);
         color: $accent;
         font-weight: 600;
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         text-transform: uppercase;
         letter-spacing: 0.5px;
+        white-space: nowrap;
     }
 
     td {
         padding: 16px;
         border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-        font-size: 0.95rem;
+        font-size: 0.9rem;
         color: rgba(255, 255, 255, 0.85);
+        white-space: nowrap;
+
+        &.obs-cell {
+            max-width: 250px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            opacity: 0.8;
+            font-size: 0.8rem;
+        }
+
+        &.comp-cell {
+            width: 160px;
+            min-width: 160px;
+            max-width: 160px;
+            white-space: normal !important;
+            word-wrap: break-word;
+            line-height: 1.4;
+        }
+
+        &.team-cell {
+            width: 140px;
+            min-width: 140px;
+            max-width: 140px;
+            white-space: normal !important;
+            word-wrap: break-word;
+            line-height: 1.4;
+        }
+
+        &.note-cell {
+            width: 220px;
+            min-width: 220px;
+            max-width: 220px;
+            white-space: normal !important;
+            word-wrap: break-word;
+            line-height: 1.4;
+            font-size: 0.8rem;
+            opacity: 0.9;
+        }
     }
+}
+
+.comp-header {
+    width: 160px;
+    min-width: 160px;
+    max-width: 160px;
+    white-space: normal !important;
+}
+
+.team-header {
+    width: 140px;
+    min-width: 140px;
+    max-width: 140px;
+    white-space: normal !important;
+}
+
+.note-header {
+    width: 220px;
+    min-width: 220px;
+    max-width: 220px;
+    white-space: normal !important;
+}
 
     tr:hover {
         background: rgba(255, 255, 255, 0.03);
     }
-}
+
 
 .actions-col {
     width: 100px;

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DataService } from '../../../core/services/data.service';
 import { PdfService } from '../../../core/services/pdf.service';
+import { OrderEditService } from '../../../core/services/order-edit.service';
 
 @Component({
   selector: 'app-gestion-pedidos',
@@ -21,6 +22,15 @@ export class GestionPedidosComponent implements OnInit {
   unidades: any[] = [];
   allComponents: any[] = []; // Para poder agregar nuevos items al editar
 
+  // Búsqueda
+  searchActive: string = '';
+  searchInactive: string = '';
+
+  // Devolución
+  isReturning = false;
+  returnObservations = '';
+  pedidoParaDevolver: any = null;
+
   // Edición
   isEditing = false;
   editForm = {
@@ -34,18 +44,32 @@ export class GestionPedidosComponent implements OnInit {
   constructor(
     private dataService: DataService,
     private pdfService: PdfService,
+    public orderEditService: OrderEditService,
     private router: Router
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.loading = true;
     this.loadData();
+    this.checkActiveEditSession();
+  }
+
+  checkActiveEditSession(): void {
+    if (this.orderEditService.isActive) {
+      this.orderEditService.activePedido$.subscribe(pedido => this.selectedPedido = pedido);
+      this.orderEditService.editForm$.subscribe(form => {
+        if (form) {
+          this.editForm = form;
+          this.isEditing = true;
+        }
+      });
+    }
   }
 
   loadData(): void {
     // Necesitamos las unidades para algunos mapeos locales si el backend no los trae todos
     this.dataService.getUnidades().subscribe(u => this.unidades = u);
-    
+
     // Necesitamos los componentes para poder agregarlos al editar un pedido
     this.dataService.getComponentes().subscribe(c => this.allComponents = c);
 
@@ -62,26 +86,40 @@ export class GestionPedidosComponent implements OnInit {
     });
   }
 
-  applyFilter(filter: 'activos' | 'inactivos'): void {
-    this.activeFilter = filter;
-    if (filter === 'activos') {
-      // Activos: Pendiente, Aprobado, Entregado
-      this.filteredPedidos = this.pedidos.filter(p => 
-        p.estado === 'pendiente' || p.estado === 'aprobado' || p.estado === 'entregado'
+  applyFilter(filter?: 'activos' | 'inactivos'): void {
+    if (filter) this.activeFilter = filter;
+
+    // Término de búsqueda según el filtro activo
+    const term = (this.activeFilter === 'activos' ? this.searchActive : this.searchInactive).toLowerCase();
+
+    let baseList = [];
+    if (this.activeFilter === 'activos') {
+      // Activos: Pendiente, Entregado
+      baseList = this.pedidos.filter(p =>
+        p.estado === 'pendiente' || p.estado === 'entregado'
       );
     } else {
-      // Inactivos: Rechazado, Devuelto
-      this.filteredPedidos = this.pedidos.filter(p => 
-        p.estado === 'rechazado' || p.estado === 'devuelto'
+      // Inactivos: Devuelto
+      baseList = this.pedidos.filter(p =>
+        p.estado === 'devuelto'
       );
+    }
+
+    if (term) {
+      this.filteredPedidos = baseList.filter(p =>
+        p.idpedido.toString().includes(term) ||
+        (p.unidad_destino_nombre && p.unidad_destino_nombre.toLowerCase().includes(term))
+      );
+    } else {
+      this.filteredPedidos = baseList;
     }
   }
 
   countByFilter(type: 'activos' | 'inactivos'): number {
     if (type === 'activos') {
-      return this.pedidos.filter(p => p.estado === 'pendiente' || p.estado === 'aprobado' || p.estado === 'entregado').length;
+      return this.pedidos.filter(p => p.estado === 'pendiente' || p.estado === 'entregado').length;
     }
-    return this.pedidos.filter(p => p.estado === 'rechazado' || p.estado === 'devuelto').length;
+    return this.pedidos.filter(p => p.estado === 'devuelto').length;
   }
 
   viewDetails(pedido: any): void {
@@ -107,76 +145,122 @@ export class GestionPedidosComponent implements OnInit {
     });
   }
 
-  descargarPdf(pedido: any): void {
+  descargarPdf(pedido: any, type: 'entrega' | 'recepcion' = 'entrega'): void {
     if (!pedido.detalle) {
       alert('Cargando detalles del pedido...');
       return;
     }
-    this.pdfService.generateReceiptPDF(pedido, pedido.detalle, this.unidades);
+    this.pdfService.generateReceiptPDF(pedido, pedido.detalle, this.unidades, type);
+  }
+
+  // --- MÉTODOS DE DEVOLUCIÓN ---
+  openReturnModal(pedido: any): void {
+    this.isReturning = true;
+    this.pedidoParaDevolver = pedido;
+    this.returnObservations = '';
+  }
+
+  closeReturnModal(): void {
+    this.isReturning = false;
+    this.pedidoParaDevolver = null;
+    this.returnObservations = '';
+  }
+
+  confirmReturn(): void {
+    if (!this.pedidoParaDevolver) return;
+    
+    this.loading = true;
+    this.dataService.updatePedidoEstado(this.pedidoParaDevolver.idpedido, 'devuelto', this.returnObservations).subscribe({
+      next: () => {
+        alert('Pedido devuelto con éxito.');
+        // Generar boleta de recepción automáticamente
+        const updatedPedido = { ...this.pedidoParaDevolver, estado: 'devuelto', observaciones_devolucion: this.returnObservations };
+        this.descargarPdf(updatedPedido, 'recepcion');
+        
+        this.closeReturnModal();
+        this.loadData();
+      },
+      error: (err) => {
+        console.error('Error al devolver pedido:', err);
+        alert('Error al procesar la devolución.');
+        this.loading = false;
+      }
+    });
   }
 
   // --- MÉTODOS DE EDICIÓN ---
   startEdit(pedido: any): void {
     this.isEditing = true;
     this.selectedPedido = pedido;
-    
+
     // Mapear fechas para el input de tipo date (YYYY-MM-DD)
     const formatDate = (d: any) => {
-        if (!d) return '';
-        const date = new Date(d);
-        return date.toISOString().split('T')[0];
+      if (!d) return '';
+      const date = new Date(d);
+      return date.toISOString().split('T')[0];
     };
 
-    this.editForm = {
+    const initialForm = {
       codigo_unidad_destino: pedido.codigo_unidad_destino,
       fecha_inicio: formatDate(pedido.fecha_inicio),
       fecha_fin: formatDate(pedido.fecha_fin),
       observaciones: pedido.observaciones || '',
       items: JSON.parse(JSON.stringify(pedido.detalle || [])) // Clonar items
     };
+
+    this.editForm = initialForm;
+    this.orderEditService.startEdit(pedido, initialForm);
   }
 
   removeItemFromEdit(index: number): void {
     this.editForm.items.splice(index, 1);
+    this.orderEditService.updateForm(this.editForm);
   }
 
-  addItemToEdit(comp: any): void {
-    // Evitar duplicados
-    const exists = this.editForm.items.find(i => i.codigo_componente === comp.codigo_componente);
-    if (exists) {
-        exists.cantidad++;
+  goToAddItems(): void {
+    // Guardar estado actual antes de navegar
+    this.orderEditService.updateForm(this.editForm);
+    this.router.navigate(['/deposito'], { queryParams: { editMode: 'true' } });
+  }
+
+  canIncreaseQuantity(item: any): boolean {
+    const comp = this.allComponents.find(c => c.codigo_componente === item.codigo_componente);
+    if (!comp) return true; // Si no lo encontramos, permitimos por ahora
+    return item.cantidad < (comp.total || 0);
+  }
+
+  increaseQuantity(item: any): void {
+    if (this.canIncreaseQuantity(item)) {
+      item.cantidad++;
+      this.orderEditService.updateForm(this.editForm);
     } else {
-        this.editForm.items.push({
-            codigo_componente: comp.codigo_componente,
-            componente: comp.componente,
-            cantidad: 1
-        });
+      alert('No hay más stock disponible para este componente.');
     }
   }
 
-  addItemFromSelector(codigoComp: any): void {
-    if (!codigoComp) return;
-    const comp = this.allComponents.find(c => c.codigo_componente === Number(codigoComp));
-    if (comp) {
-        this.addItemToEdit(comp);
+  decreaseQuantity(item: any): void {
+    if (item.cantidad > 1) {
+      item.cantidad--;
+      this.orderEditService.updateForm(this.editForm);
     }
   }
 
   cancelEdit(): void {
     this.isEditing = false;
     this.selectedPedido = null;
+    this.orderEditService.clear();
   }
 
   guardarCambios(): void {
     if (!this.selectedPedido) return;
     if (!this.editForm.codigo_unidad_destino || !this.editForm.fecha_inicio || !this.editForm.fecha_fin) {
-        alert('Por favor, complete los campos obligatorios.');
-        return;
+      alert('Por favor, complete los campos obligatorios.');
+      return;
     }
 
     if (this.editForm.items.length === 0) {
-        alert('El pedido debe tener al menos un componente.');
-        return;
+      alert('El pedido debe tener al menos un componente.');
+      return;
     }
 
     this.loading = true;
@@ -185,6 +269,7 @@ export class GestionPedidosComponent implements OnInit {
         alert('Pedido actualizado con éxito.');
         this.isEditing = false;
         this.selectedPedido = null;
+        this.orderEditService.clear();
         this.loadData();
       },
       error: (err) => {

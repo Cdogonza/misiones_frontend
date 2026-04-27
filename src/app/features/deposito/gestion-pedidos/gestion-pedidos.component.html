@@ -32,7 +32,7 @@
                 <h1>Gestión de Pedidos</h1>
                 <p>Monitoreo y administración de préstamos de componentes.</p>
             </div>
-            
+
             <div class="filter-tabs">
                 <button [class.active]="activeFilter === 'activos'" (click)="applyFilter('activos')">
                     Activos <span>({{ countByFilter('activos') }})</span>
@@ -43,171 +43,212 @@
             </div>
         </header>
 
+        <div class="search-section animate-fade-in">
+            @if (activeFilter === 'activos') {
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" [(ngModel)]="searchActive" (ngModelChange)="applyFilter()"
+                    placeholder="Buscar pedido activo por ID o Unidad..." class="search-input" />
+                @if (searchActive) {
+                <button class="clear-search" (click)="searchActive = ''; applyFilter()">×</button>
+                }
+            </div>
+            } @else {
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" [(ngModel)]="searchInactive" (ngModelChange)="applyFilter()"
+                    placeholder="Buscar pedido inactivo por ID o Unidad..." class="search-input" />
+                @if (searchInactive) {
+                <button class="clear-search" (click)="searchInactive = ''; applyFilter()">×</button>
+                }
+            </div>
+            }
+        </div>
+
         <div class="content-body">
             @if (loading) {
-                <div class="loader-container">
-                    <div class="spinner"></div>
-                    <p>Cargando historial...</p>
-                </div>
+            <div class="loader-container">
+                <div class="spinner"></div>
+                <p>Cargando historial...</p>
+            </div>
             } @else {
-                <div class="table-card animate-fade-in">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>FECHA</th>
-                                <th>DESTINO</th>
-                                <th>ESTADO</th>
-                                <th>USUARIO</th>
-                                <th class="actions-col">ACCIONES</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @for (pedido of filteredPedidos; track pedido.idpedido) {
-                                <tr>
-                                    <td>{{ pedido.fecha_inicio | date:'dd/MM/yyyy' }}</td>
-                                    <td>
-                                        <div class="dest-cell">
-                                            <strong>{{ pedido.unidad_destino_nombre || 'Interno' }}</strong>
-                                            <span>{{ pedido.fecha_inicio | date:'dd/MM' }} al {{ pedido.fecha_fin | date:'dd/MM' }}</span>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <span class="status-badge" [ngClass]="getEstadoClass(pedido.estado)">
-                                            {{ pedido.estado | uppercase }}
-                                        </span>
-                                    </td>
-                                    <td>{{ pedido.usuario }}</td>
-                                    <td class="actions-cell">
-                                        <div class="btn-group">
-                                            <button class="btn-icon" (click)="viewDetails(pedido)" title="Ver detalles">🔍</button>
-                                            <button class="btn-icon" (click)="descargarPdf(pedido)" title="Descargar PDF">📄</button>
-                                            
-                                            @if (pedido.estado === 'pendiente') {
-                                                <button class="btn-icon edit-btn" (click)="startEdit(pedido)" title="Editar Pedido">✏️</button>
-                                            }
+            <div class="table-card animate-fade-in">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>FECHA</th>
+                            <th>DESTINO</th>
+                            <th>ESTADO</th>
+                            <th>USUARIO</th>
+                            <th class="actions-col">ACCIONES</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (pedido of filteredPedidos; track pedido.idpedido) {
+                        <tr>
+                            <td>{{ pedido.fecha_inicio | date:'dd/MM/yyyy' }}</td>
+                            <td>
+                                <div class="dest-cell">
+                                    <strong>{{ pedido.unidad_destino_nombre || 'Interno' }}</strong>
+                                    <span>{{ pedido.fecha_inicio | date:'dd/MM' }} al {{ pedido.fecha_fin | date:'dd/MM'
+                                        }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="status-badge" [ngClass]="getEstadoClass(pedido.estado)">
+                                    {{ pedido.estado | uppercase }}
+                                </span>
+                            </td>
+                            <td>{{ pedido.usuario }}</td>
+                            <td class="actions-cell">
+                                <div class="btn-group">
+                                    <button class="btn-icon" (click)="viewDetails(pedido)"
+                                        title="Ver detalles">🔍</button>
+                                    
+                                    @if (activeFilter === 'inactivos') {
+                                        <button class="btn-icon" (click)="descargarPdf(pedido, 'entrega')" title="Boleta de Entrega">📄🚚</button>
+                                        <button class="btn-icon" (click)="descargarPdf(pedido, 'recepcion')" title="Boleta de Recepción">📄✅</button>
+                                    } @else {
+                                        <button class="btn-icon" (click)="descargarPdf(pedido)" title="Descargar PDF">📄</button>
+                                    }
 
-                                            @if (pedido.estado !== 'devuelto' && pedido.estado !== 'rechazado') {
-                                                <button class="btn-icon status-toggle" (click)="cambiarEstado(pedido, 'devuelto')" title="Marcar como Devuelto">✅</button>
-                                            }
-                                        </div>
-                                    </td>
-                                </tr>
-                            } @empty {
-                                <tr>
-                                    <td colspan="5" class="empty-msg">No se encontraron pedidos en esta categoría.</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
+                                    @if (pedido.estado === 'pendiente') {
+                                    <button class="btn-icon delivery-btn" (click)="cambiarEstado(pedido, 'entregado')"
+                                        title="Marcar como Entregado">🚚</button>
+                                    <button class="btn-icon edit-btn" (click)="startEdit(pedido)"
+                                        title="Editar Pedido">✏️</button>
+                                    }
+
+                                    @if (pedido.estado !== 'devuelto') {
+                                    <button class="btn-icon status-toggle" (click)="openReturnModal(pedido)"
+                                        title="Marcar como Devuelto">✅</button>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                        } @empty {
+                        <tr>
+                            <td colspan="5" class="empty-msg">No se encontraron pedidos en esta categoría.</td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
             }
         </div>
     </main>
 
     <!-- Modal de Detalles -->
     @if (selectedPedido) {
-        <div class="modal-backdrop" (click)="closeDetails()">
-            <div class="modal-content" (click)="$event.stopPropagation()">
-                <header class="modal-header">
-                    <h3>Detalle del Pedido #{{ selectedPedido.idpedido }}</h3>
-                    <button class="btn-close" (click)="closeDetails()">×</button>
-                </header>
-                
-                <div class="modal-body">
-                    <div class="detail-grid">
-                        <div class="info-item">
-                            <label>Unidad Destino</label>
-                            <p>{{ selectedPedido.unidad_destino_nombre || 'N/A' }}</p>
-                        </div>
-                        <div class="info-item">
-                            <label>Periodo</label>
-                            <p>{{ selectedPedido.fecha_inicio | date:'dd/MM/yyyy' }} al {{ selectedPedido.fecha_fin | date:'dd/MM/yyyy' }}</p>
-                        </div>
-                        <div class="info-item full">
-                            <label>Observaciones</label>
-                            <p>{{ selectedPedido.observaciones || 'Sin observaciones' }}</p>
-                        </div>
-                    </div>
+    <div class="modal-backdrop" (click)="closeDetails()">
+        <div class="modal-content" (click)="$event.stopPropagation()">
+            <header class="modal-header">
+                <h3>Detalle del Pedido #{{ selectedPedido.idpedido }}</h3>
+                <button class="btn-close" (click)="closeDetails()">×</button>
+            </header>
 
-                    <div class="components-list">
-                        <h4>Componentes Solicitados</h4>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Cant.</th>
-                                    <th>Descripción</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @for (item of selectedPedido.detalle; track item.iddetalle) {
-                                    <tr>
-                                        <td class="qty">{{ item.cantidad }}</td>
-                                        <td>{{ item.componente }}</td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
+            <div class="modal-body">
+                <div class="detail-grid">
+                    <div class="info-item">
+                        <label>Unidad Destino</label>
+                        <p>{{ selectedPedido.unidad_destino_nombre || 'N/A' }}</p>
                     </div>
+                    <div class="info-item">
+                        <label>Periodo</label>
+                        <p>{{ selectedPedido.fecha_inicio | date:'dd/MM/yyyy' }} al {{ selectedPedido.fecha_fin |
+                            date:'dd/MM/yyyy' }}</p>
+                    </div>
+                    <div class="info-item full">
+                        <label>Observaciones de Entrega</label>
+                        <p>{{ selectedPedido.observaciones || 'Sin observaciones' }}</p>
+                    </div>
+                    @if (selectedPedido.observaciones_devolucion) {
+                        <div class="info-item full">
+                            <label>Observaciones de Recepción</label>
+                            <p>{{ selectedPedido.observaciones_devolucion }}</p>
+                        </div>
+                    }
                 </div>
 
-                <footer class="modal-footer">
-                    <button class="btn-secondary" (click)="descargarPdf(selectedPedido)">Generar Recibo PDF</button>
-                    <button class="btn-primary" (click)="closeDetails()">Cerrar</button>
-                </footer>
+                <div class="components-list">
+                    <h4>Componentes Solicitados</h4>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Cant.</th>
+                                <th>Descripción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (item of selectedPedido.detalle; track item.iddetalle) {
+                            <tr>
+                                <td class="qty">{{ item.cantidad }}</td>
+                                <td>{{ item.componente }}</td>
+                            </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
             </div>
+
+            <footer class="modal-footer">
+                @if (selectedPedido.estado === 'devuelto') {
+                    <button class="btn-secondary" (click)="descargarPdf(selectedPedido, 'entrega')">Boleta Entrega</button>
+                    <button class="btn-secondary" (click)="descargarPdf(selectedPedido, 'recepcion')">Boleta Recepción</button>
+                } @else {
+                    <button class="btn-secondary" (click)="descargarPdf(selectedPedido)">Generar Boleta</button>
+                }
+                <button class="btn-primary" (click)="closeDetails()">Cerrar</button>
+            </footer>
         </div>
+    </div>
     }
 
     <!-- Modal de Edición -->
     @if (isEditing) {
-        <div class="modal-backdrop" (click)="cancelEdit()">
-            <div class="modal-content edit-modal" (click)="$event.stopPropagation()">
-                <header class="modal-header">
-                    <h3>Editar Configuración del Pedido #{{ selectedPedido?.idpedido }}</h3>
-                    <button class="btn-close" (click)="cancelEdit()">×</button>
-                </header>
+    <div class="modal-backdrop" (click)="cancelEdit()">
+        <div class="modal-content edit-modal" (click)="$event.stopPropagation()">
+            <header class="modal-header">
+                <h3>Editar Configuración del Pedido #{{ selectedPedido?.idpedido }}</h3>
+                <button class="btn-close" (click)="cancelEdit()">×</button>
+            </header>
 
-                <div class="modal-body">
-                    <div class="edit-grid">
-                        <div class="form-group">
-                            <label>Unidad de Destino</label>
-                            <select [(ngModel)]="editForm.codigo_unidad_destino" class="form-select">
-                                <option [ngValue]="null">Seleccione unidad...</option>
-                                @for (u of unidades; track u.codigo_unidad) {
-                                    <option [ngValue]="u.codigo_unidad">{{ u.nombre_de_la_unidad }}</option>
-                                }
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label>Fecha de Inicio</label>
-                            <input type="date" [(ngModel)]="editForm.fecha_inicio" class="form-input" />
-                        </div>
-
-                        <div class="form-group">
-                            <label>Fecha de Fin</label>
-                            <input type="date" [(ngModel)]="editForm.fecha_fin" class="form-input" />
-                        </div>
-
-                        <div class="form-group full-width">
-                            <label>Observaciones</label>
-                            <textarea [(ngModel)]="editForm.observaciones" class="form-textarea" placeholder="Observaciones adicionales..."></textarea>
-                        </div>
+            <div class="modal-body">
+                <div class="edit-grid">
+                    <div class="form-group">
+                        <label>Unidad de Destino</label>
+                        <select [(ngModel)]="editForm.codigo_unidad_destino" class="form-select">
+                            <option [ngValue]="null">Seleccione unidad...</option>
+                            @for (u of unidades; track u.codigo_unidad) {
+                            <option [ngValue]="u.codigo_unidad">{{ u.nombre_de_la_unidad }}</option>
+                            }
+                        </select>
                     </div>
 
-                    <div class="edit-items-section">
-                        <h4>Componentes del Pedido</h4>
-                        
-                        <div class="add-item-control">
-                            <select #compSelector class="form-select">
-                                <option [ngValue]="null">Seleccione componente para agregar...</option>
-                                @for (comp of allComponents; track comp.codigo_componente) {
-                                    <option [value]="comp.codigo_componente">{{ comp.componente }} (Serie: {{ comp.serie || '-' }})</option>
-                                }
-                            </select>
-                            <button class="btn-add-item" (click)="addItemFromSelector(compSelector.value); compSelector.value = ''">＋ Añadir</button>
-                        </div>
+                    <div class="form-group">
+                        <label>Fecha de Inicio</label>
+                        <input type="date" [(ngModel)]="editForm.fecha_inicio" class="form-input" />
+                    </div>
 
+                    <div class="form-group">
+                        <label>Fecha de Fin</label>
+                        <input type="date" [(ngModel)]="editForm.fecha_fin" class="form-input" />
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label>Observaciones</label>
+                        <textarea [(ngModel)]="editForm.observaciones" class="form-textarea"
+                            placeholder="Observaciones adicionales..."></textarea>
+                    </div>
+                </div>
+
+                <div class="edit-items-section">
+                    <div class="section-header">
+                        <h4>Componentes del Pedido</h4>
+                        <button class="btn-add-item-nav" (click)="goToAddItems()">＋ Agregar Nuevo</button>
+                    </div>
+
+                    <div class="table-scroll-container">
                         <table class="edit-items-table">
                             <thead>
                                 <tr>
@@ -218,32 +259,63 @@
                             </thead>
                             <tbody>
                                 @for (item of editForm.items; track $index) {
-                                    <tr>
-                                        <td>{{ item.componente }}</td>
-                                        <td>
-                                            <div class="qty-control">
-                                                <button (click)="item.cantidad = item.cantidad > 1 ? item.cantidad - 1 : 1">-</button>
-                                                <input type="number" [(ngModel)]="item.cantidad" min="1" />
-                                                <button (click)="item.cantidad = item.cantidad + 1">+</button>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <button class="btn-remove-item" (click)="removeItemFromEdit($index)">🗑️</button>
-                                        </td>
-                                    </tr>
+                                <tr>
+                                    <td>{{ item.componente }}</td>
+                                    <td>
+                                        <div class="qty-control">
+                                            <button (click)="decreaseQuantity(item)">-</button>
+                                            <input type="number" [(ngModel)]="item.cantidad" readonly />
+                                            <button (click)="increaseQuantity(item)" [disabled]="!canIncreaseQuantity(item)">+</button>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <button class="btn-remove-item" (click)="removeItemFromEdit($index)">🗑️</button>
+                                    </td>
+                                </tr>
                                 }
                             </tbody>
                         </table>
                     </div>
                 </div>
-
-                <footer class="modal-footer">
-                    <button class="btn-secondary" (click)="cancelEdit()">Cancelar</button>
-                    <button class="btn-primary" (click)="guardarCambios()" [disabled]="loading">
-                        {{ loading ? 'Guardando...' : 'Guardar Cambios' }}
-                    </button>
-                </footer>
             </div>
+
+            <footer class="modal-footer">
+                <button class="btn-secondary" (click)="cancelEdit()">Cancelar</button>
+                <button class="btn-primary" (click)="guardarCambios()" [disabled]="loading">
+                    {{ loading ? 'Guardando...' : 'Guardar Cambios' }}
+                </button>
+            </footer>
         </div>
+    </div>
+    }
+
+    <!-- Modal de Recepción (Devolución) -->
+    @if (isReturning) {
+    <div class="modal-backdrop" (click)="closeReturnModal()">
+        <div class="modal-content" (click)="$event.stopPropagation()">
+            <header class="modal-header">
+                <h3>Registrar Recepción de Equipo #{{ pedidoParaDevolver?.idpedido }}</h3>
+                <button class="btn-close" (click)="closeReturnModal()">×</button>
+            </header>
+
+            <div class="modal-body">
+                <div class="form-group full-width" style="display: flex; flex-direction: column; gap: 10px;">
+                    <label style="color: #f5c518; font-weight: 600;">Observaciones de Recepción</label>
+                    <textarea [(ngModel)]="returnObservations" class="form-textarea"
+                        placeholder="Especifique el estado del equipo al recibirlo..."
+                        style="min-height: 150px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: #fff; padding: 12px; font-family: inherit; resize: vertical;"></textarea>
+                    <p style="font-size: 0.8rem; opacity: 0.6;">Al aceptar, se cambiará el estado a DEVUELTO y se generará
+                        la Boleta de Recepción.</p>
+                </div>
+            </div>
+
+            <footer class="modal-footer">
+                <button class="btn-secondary" (click)="closeReturnModal()">Cancelar</button>
+                <button class="btn-primary" (click)="confirmReturn()" [disabled]="loading">
+                    {{ loading ? 'Confirmando...' : 'Confirmar Recepción' }}
+                </button>
+            </footer>
+        </div>
+    </div>
     }
 </div>

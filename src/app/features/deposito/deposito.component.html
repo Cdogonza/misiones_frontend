@@ -11,7 +11,7 @@
 
         <nav class="nav-menu">
             <button class="nav-item active">
-                <span class="icon">📦</span> Depósito
+                <span class="icon">📦</span> Inventario
             </button>
             <button class="nav-item" (click)="onVerPedido()">
                 <span class="icon">🛒</span> Mi Pedido
@@ -20,26 +20,50 @@
                 }
             </button>
             <button class="nav-item" (click)="onGestionarPedidos()">
-                <span class="icon">📋</span> Gestión Pedidos
+                <span class="icon">📋</span> Gestión de Pedidos
             </button>
             <button class="nav-item" [routerLink]="['/mantenimiento']">
                 <span class="icon">🛠️</span> Mantenimiento
             </button>
             <div class="nav-divider"></div>
                         <button class="btn-logout" (click)="logout()">
+            @if (orderEditService.isActive) {
+            <button class="nav-item edit-session-btn" (click)="onVolverEdicion()">
+                <span class="icon">✏️</span> Volver a la Edición
+            </button>
+            }
+            <div class="nav-divider"></div>
+            <p class="nav-hint">Panel de Control</p>
+            @if (auth.isJefatura()) {
+            <button class="nav-item btn-switch" (click)="goToSelector()">
+                <span class="icon">🔀</span> Cambiar Oficina
+            </button>
+            }
+            <button class="btn-logout" (click)="logout()">
                 <span class="icon">⬅</span> Cerrar Sesión
             </button>
         </nav>
 
         <div class="sidebar-footer">
 
+            
         </div>
     </aside>
 
     <!-- Main Content -->
     <main class="main-content">
         <header class="content-header">
-            <h1>Panel de Depósito</h1>
+            <div class="title-group">
+                <h1>Panel de Depósito</h1>
+                <p>Gestión de piezas, equipos y componentes técnicos.</p>
+            </div>
+
+            @if (editMode && (orderEditService.activePedido$ | async)) {
+            <div class="edit-mode-badge animate-pulse">
+                <span class="icon">✏️</span> Editando Pedido #{{ (orderEditService.activePedido$ | async)?.idpedido }}
+            </div>
+            }
+
             <div class="user-info" (click)="onProfileClick()" title="Mi Perfil">
                 <span> {{ profile.username }}</span>
                 <div class="avatar">{{ profile.username?.[0]?.toUpperCase() }}</div>
@@ -59,13 +83,18 @@
                     <button class="btn-tool" (click)="onVerTodos()">
                         <span class="icon">👁️</span> Ver todos
                     </button>
+                     @if (auth.isAdmin()) {
+                    <button class="btn-tool btn-new" (click)="onNuevoEquipo()">
+                        <span class="icon">🏷️</span> Nuevo Equipo
+                    </button>
                     <button class="btn-tool btn-new" (click)="onNuevo()">
                         <span class="icon">➕</span> Nuevo Componente
                     </button>
+                    }
                 </div>
                 <div class="toolbar-search">
                     <input type="text" [(ngModel)]="searchText" (keyup.enter)="onSearch()"
-                        placeholder="Filtrar por componente o serie..." class="tool-search-input" />
+                        placeholder="Filtrar por componente, serie o equipo..." class="tool-search-input" />
                     <button class="btn-search-icon" (click)="onSearch()">🔍</button>
                 </div>
             </div>
@@ -76,10 +105,14 @@
                     <thead>
                         <tr>
                             <th>Código</th>
-                            <th>Componente</th>
+                            <th class="comp-header">Componente</th>
+                            <th class="team-header">Equipo</th>
                             <th>Serie</th>
+                            <th>Lugar</th>
+                            <th>Clasificación</th>
                             <th>Estado</th>
                             <th>Cantidad</th>
+                            <th class="note-header">Observación</th>
                             <th class="actions-col">Acciones</th>
                         </tr>
                     </thead>
@@ -87,23 +120,29 @@
                         @for (c of filteredData; track c.codigo_componente) {
                         <tr>
                             <td>{{ c.codigo_componente }}</td>
-                            <td>{{ c.componente }}</td>
+                            <td class="comp-cell">{{ c.componente }}</td>
+                            <td class="team-cell">{{ c.equipo || '-' }}</td>
                             <td>{{ c.serie || '-' }}</td>
+                            <td>{{ c.lugar || '-' }}</td>
+                            <td>{{ c.clasificacion || '-' }}</td>
                             <td><span class="badge" [attr.data-status]="c.estado">{{ c.estado }}</span></td>
                             <td>{{ getAvailableStock(c) }}</td>
+                            <td class="note-cell" [title]="c.observacion">{{ c.observacion || '-' }}</td>
                             <td class="actions-cell">
                                 <button class="btn-action cart" 
                                         (click)="openCartModal(c)" 
                                         [disabled]="getAvailableStock(c) <= 0"
                                         [title]="getAvailableStock(c) <= 0 ? 'Sin stock disponible' : 'Añadir al Pedido'">🛒</button>
+                                @if (auth.isAdmin()) {
                                 <button class="btn-action edit" (click)="onEdit(c)" title="Editar">✏️</button>
                                 <button class="btn-action delete" (click)="onDelete(c.codigo_componente)"
                                     title="Eliminar">🗑️</button>
+                                }
                             </td>
                         </tr>
                         } @empty {
                         <tr>
-                            <td colspan="6" class="empty-msg">No se encontraron componentes en DEPOSITO BASE.</td>
+                            <td colspan="10" class="empty-msg">No se encontraron componentes en DEPOSITO BASE.</td>
                         </tr>
                         }
                     </tbody>

@@ -102,6 +102,32 @@ $glass-border: rgba(255, 255, 255, 0.15);
 .sidebar-footer {
     padding: 0 20px;
     margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.btn-switch-panel {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: rgba(99, 202, 183, 0.1);
+    border: 1px solid rgba(99, 202, 183, 0.3);
+    border-radius: 10px;
+    color: #63cab7;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s;
+
+    &:hover {
+        background: rgba(99, 202, 183, 0.2);
+        border-color: rgba(99, 202, 183, 0.5);
+        transform: translateY(-2px);
+    }
 }
 
 .btn-logout {

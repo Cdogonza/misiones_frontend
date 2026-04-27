@@ -13,6 +13,12 @@ export const routes: Routes = [
             import('./features/auth/login/login.component').then(m => m.LoginComponent)
     },
     {
+        path: 'selector',
+        loadComponent: () =>
+            import('./features/selector/selector.component').then(m => m.SelectorComponent),
+        canActivate: [authGuard]
+    },
+    {
         path: 'dashboard',
         loadComponent: () =>
             import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent),
