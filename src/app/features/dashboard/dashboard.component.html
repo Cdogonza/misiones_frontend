@@ -22,6 +22,12 @@
             <button class="nav-item" [class.active]="activeView === 'unidades'" (click)="switchView('unidades')">
                 <span class="icon">🏢</span> Unidades
             </button>
+            <button class="nav-item" [routerLink]="['/mantenimiento']">
+                <span class="icon">🛠️</span> Mantenimiento
+            </button>
+        </nav>
+
+        <div class="sidebar-footer">
             <div class="nav-divider"></div>
        
             @if (auth.isJefatura()) {

@@ -61,6 +61,12 @@ export const routes: Routes = [
         canActivate: [authGuard]
     },
     {
+        path: 'mantenimiento',
+        loadComponent: () =>
+            import('./features/mantenimiento/mantenimiento.component').then(m => m.MantenimientoComponent),
+        canActivate: [authGuard]
+    },
+    {
         path: '**',
         redirectTo: 'login'
     }

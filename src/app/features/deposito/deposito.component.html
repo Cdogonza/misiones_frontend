@@ -22,6 +22,11 @@
             <button class="nav-item" (click)="onGestionarPedidos()">
                 <span class="icon">📋</span> Gestión de Pedidos
             </button>
+            <button class="nav-item" [routerLink]="['/mantenimiento']">
+                <span class="icon">🛠️</span> Mantenimiento
+            </button>
+            <div class="nav-divider"></div>
+                        <button class="btn-logout" (click)="logout()">
             @if (orderEditService.isActive) {
             <button class="nav-item edit-session-btn" (click)="onVolverEdicion()">
                 <span class="icon">✏️</span> Volver a la Edición
@@ -40,6 +45,7 @@
         </nav>
 
         <div class="sidebar-footer">
+
             
         </div>
     </aside>
