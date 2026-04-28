@@ -163,4 +163,18 @@ export class AuthService {
             o === 'Jefe de Seccion Mant.'
         );
     }
+
+    canAccessMantenimiento(): boolean {
+        const oficina = this.getUserOficina();
+        if (!oficina) return false;
+        
+        const allowedOffices = [
+            'Jefe', '2do Jefe', 'Cte. de Ca.', 'Jefe de Secc. Mant.',
+            'Sala I', 'Sala II', 'Sala III', 'Sala IV', 'Sala V', 'Rec. y Entrega'
+        ];
+        
+        const o = oficina.trim();
+        const isAdmin = this.isAdmin();
+        return allowedOffices.some(off => o.includes(off)) || isAdmin;
+    }
 }

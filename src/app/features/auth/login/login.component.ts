@@ -46,9 +46,15 @@ export class LoginComponent {
         this.auth.login(this.form.value).subscribe({
             next: () => {
                 this.loading = false;
-                if (this.auth.isJefatura()) {
+                const hasJefatura = this.auth.isJefatura();
+                const hasMantenimiento = this.auth.canAccessMantenimiento();
+                const isDeposito = this.auth.getUserOficina()?.toLowerCase().includes('deposito');
+
+                if (hasJefatura || (hasMantenimiento && isDeposito)) {
                     this.router.navigate(['/selector']);
-                } else if (this.auth.getUserOficina()?.toLowerCase().includes('deposito')) {
+                } else if (hasMantenimiento) {
+                    this.router.navigate(['/mantenimiento']);
+                } else if (isDeposito) {
                     this.router.navigate(['/deposito']);
                 } else {
                     this.router.navigate(['/dashboard']);

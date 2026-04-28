@@ -22,16 +22,12 @@
             <button class="nav-item" (click)="onGestionarPedidos()">
                 <span class="icon">📋</span> Gestión de Pedidos
             </button>
-            <button class="nav-item" [routerLink]="['/mantenimiento']">
-                <span class="icon">🛠️</span> Mantenimiento
-            </button>
-            <div class="nav-divider"></div>
-                        <button class="btn-logout" (click)="logout()">
             @if (orderEditService.isActive) {
             <button class="nav-item edit-session-btn" (click)="onVolverEdicion()">
                 <span class="icon">✏️</span> Volver a la Edición
             </button>
             }
+        
             <div class="nav-divider"></div>
             <p class="nav-hint">Panel de Control</p>
             @if (auth.isJefatura()) {
@@ -43,11 +39,6 @@
                 <span class="icon">⬅</span> Cerrar Sesión
             </button>
         </nav>
-
-        <div class="sidebar-footer">
-
-            
-        </div>
     </aside>
 
     <!-- Main Content -->

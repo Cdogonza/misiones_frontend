@@ -2,37 +2,30 @@
     <!-- SIDEBAR -->
     <aside class="sidebar">
         <div class="sidebar-header">
-            <img src="assets/logo.png" alt="Logo" class="mini-logo">
+            <img src="logo.png" alt="Logo" class="mini-logo">
             <div class="header-text">
-                <h2>Misiones</h2>
-                <p>Gestión de Mantenimiento</p>
+                <h2>Mantenimiento</h2>
+            
             </div>
         </div>
 
         <nav class="nav-menu">
-            <button class="nav-item" [routerLink]="['/dashboard']">
-                <span class="icon">📊</span>
-                Dashboard
-            </button>
-            <button class="nav-item active">
-                <span class="icon">🛠️</span>
-                Mantenimiento
-            </button>
-            <button class="nav-item" [routerLink]="['/deposito']">
-                <span class="icon">📦</span>
-                Depósito
-            </button>
             
             <div class="nav-divider"></div>
-            <p class="nav-hint">Sesión activa</p>
-        </nav>
-
-        <div class="sidebar-footer">
-            <button class="btn-logout" (click)="logout()">
-                <span class="icon">🚪</span>
-                Cerrar Sesión
+              <p class="nav-hint">Panel de Control</p>
+            @if (auth.isJefatura()) {
+            <button class="nav-item btn-switch" (click)="goToSelector()">
+                <span class="icon">🔀</span> Cambiar Oficina
             </button>
-        </div>
+            }
+            <div class="nav-divider"></div>
+    
+            <button class="btn-logout" (click)="logout()">
+                <span class="icon">⬅</span> Cerrar Sesión
+            </button>
+        </nav>
+          
+
     </aside>
 
     <!-- MAIN CONTENT -->
@@ -40,6 +33,15 @@
         <header class="content-header">
             <div class="header-left">
                 <h1>Mantenimiento</h1>
+            </div>
+            
+            <div class="filter-tabs">
+                <button [class.active]="activeFilter === 'activos'" (click)="applyFilter('activos')">
+                    Activos <span>({{ countByFilter('activos') }})</span>
+                </button>
+                <button [class.active]="activeFilter === 'inactivos'" (click)="applyFilter('inactivos')">
+                    Inactivos <span>({{ countByFilter('inactivos') }})</span>
+                </button>
             </div>
             
             <div class="user-info" (click)="onProfileClick()">
@@ -57,7 +59,14 @@
                 <span class="btn-search-icon">🔍</span>
                 <input type="text" 
                        [(ngModel)]="searchText" 
-                       placeholder="Buscar por equipo, procedencia, ubicación o ID..." 
+                       placeholder="Buscar general..." 
+                       class="tool-search-input">
+            </div>
+            <div class="toolbar-search" style="margin-left: 10px;">
+                <span class="btn-search-icon">📄</span>
+                <input type="text" 
+                       [(ngModel)]="searchBoletaText" 
+                       placeholder="Filtrar por Boleta (ej: BOL-XXXX)..." 
                        class="tool-search-input">
             </div>
 
@@ -80,7 +89,8 @@
                     <thead>
                         <tr>
                             <th>ID</th>
-                            <th>Fecha Entrada</th>
+                            <th>Boleta</th>
+                            <th>{{ activeFilter === 'activos' ? 'Fecha Ingreso' : 'Fecha Egreso' }}</th>
                             <th>Equipo</th>
                             <th>Marca</th>
                             <th>Nro Serie</th>
@@ -94,7 +104,8 @@
                     <tbody>
                         <tr *ngFor="let item of filteredMantenimientos">
                             <td>#{{ item.id_mantenimiento }}</td>
-                            <td>{{ item.fecha_entrada | date:'dd/MM/yyyy' }}</td>
+                            <td><span class="boleta-badge" *ngIf="item.id_boleta">{{ item.id_boleta }}</span></td>
+                            <td>{{ (activeFilter === 'activos' ? item.fecha_entrada : item.fecha_final) | date:'dd/MM/yyyy' }}</td>
                             <td><strong>{{ item.equipo }}</strong></td>
                             <td>{{ item.marca }}</td>
                             <td><code>{{ item.nro_serie }}</code></td>
@@ -109,6 +120,15 @@
                             <td class="actions-cell">
                                 <button class="btn-action edit" (click)="onEdit(item)" title="Editar">
                                     ✏️
+                                </button>
+                                <button *ngIf="item.id_boleta && item.estado !== 'DEVUELTO'" class="btn-action return" (click)="abrirModalDevolucion(item.id_boleta)" title="Devolución por Boleta">
+                                    📤
+                                </button>
+                                <button *ngIf="item.id_boleta && item.estado === 'DEVUELTO'" class="btn-action pdf" (click)="redescargarBoletaDevolucion(item.id_boleta)" title="Redescargar Boleta Devolución">
+                                    📄
+                                </button>
+                                <button *ngIf="item.estado !== 'DEVUELTO'" class="btn-action deliver" (click)="onDeliver(item)" title="Entregar a Sala">
+                                    🚚
                                 </button>
                                 <button class="btn-action delete" (click)="onDelete(item.id_mantenimiento!)" title="Eliminar">
                                     🗑️
@@ -142,7 +162,12 @@
     <div class="modal-overlay" *ngIf="showModal">
         <div class="form-modal animate-fade-in">
             <header class="modal-header">
-                <h3>{{ isEditing ? 'Editar Registro' : 'Nuevo Registro de Mantenimiento' }}</h3>
+                <h3>
+                    {{ isEditing ? 'Editar Registro' : 'Nuevo Registro de Mantenimiento' }}
+                    <span class="badge" *ngIf="pendingRecords.length > 0">
+                        {{ pendingRecords.length }} equipo(s) en la boleta
+                    </span>
+                </h3>
                 <button class="close-btn" (click)="closeModal()">×</button>
             </header>
             
@@ -186,7 +211,7 @@
                             </div>
                             <div class="form-group">
                                 <label>Tel. Contacto</label>
-                                <input type="number" [(ngModel)]="currentRecord.tel_contacto" name="tel_contacto">
+                                 <input type="text" [(ngModel)]="currentRecord.tel_contacto" name="tel_contacto" placeholder="Números de contacto">
                             </div>
                             <div class="form-group">
                                 <label>Calidad</label>
@@ -210,30 +235,9 @@
                             </div>
                             <div class="form-group">
                                 <label>Ubicación</label>
-                                <input type="text" [(ngModel)]="currentRecord.ubicacion" name="ubicacion" placeholder="Estante/Sala">
+                                <input type="text" [(ngModel)]="currentRecord.ubicacion" name="ubicacion" [readonly]="!isEditing" placeholder="Ubicación por defecto">
                             </div>
-                            <div class="form-group">
-                                <label>Estado</label>
-                                <select [(ngModel)]="currentRecord.estado" name="estado">
-                                    <option value="Pendiente">Pendiente</option>
-                                    <option value="En Curso">En Curso</option>
-                                    <option value="Esperando Repuestos">Esperando Repuestos</option>
-                                    <option value="Reparado">Reparado</option>
-                                    <option value="Irreparable">Irreparable</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Presupuesto</label>
-                                <input type="text" [(ngModel)]="currentRecord.presupuesto" name="presupuesto" placeholder="Costo o S/D">
-                            </div>
-                            <div class="form-group">
-                                <label>Técnico Asignado</label>
-                                <input type="text" [(ngModel)]="currentRecord.tecnico" name="tecnico" placeholder="Nombre del técnico">
-                            </div>
-                            <div class="form-group">
-                                <label>Fecha Finalización</label>
-                                <input type="date" [(ngModel)]="currentRecord.fecha_final" name="fecha_final">
-                            </div>
+
                         </div>
                     </div>
 
@@ -246,8 +250,85 @@
 
             <footer class="modal-footer">
                 <button class="btn-cancel" (click)="closeModal()" [disabled]="loading">Cancelar</button>
+                <button *ngIf="!isEditing" class="btn-secondary" (click)="addAnotherRecord()" [disabled]="loading">
+                    Agregar otro equipo
+                </button>
                 <button class="btn-confirm" (click)='saveRecord()' [disabled]="loading">
-                    {{ loading ? 'Guardando...' : (isEditing ? 'Actualizar Registro' : 'Crear Registro') }}
+                    {{ loading ? 'Guardando...' : (isEditing ? 'Actualizar Registro' : 'Confirmar y Crear Boleta') }}
+                </button>
+            </footer>
+        </div>
+    </div>
+    
+    <!-- Modal de Entrega a Sala -->
+    <div class="modal-overlay animate-fade-in" *ngIf="showDeliverModal">
+        <div class="form-modal deliver-modal">
+            <header class="modal-header">
+                <h3>Pasar el equipo a sala:</h3>
+                <button class="close-btn" (click)="closeDeliverModal()">×</button>
+            </header>
+            <div class="modal-body">
+                <p class="modal-intro">Selecciona el destino para el equipo: <br> <strong>{{ recordToDeliver?.equipo }}</strong> (Serie: {{ recordToDeliver?.nro_serie }})</p>
+                
+                <div class="record-form">
+                    <div class="form-group">
+                        <label>Sala Destino</label>
+                        <select [(ngModel)]="newLocation" class="deliver-select">
+                            <option value="SALA I">SALA I</option>
+                            <option value="SALA II">SALA II</option>
+                            <option value="SALA III">SALA III</option>
+                            <option value="SALA IV">SALA IV</option>
+                            <option value="SALA V">SALA V</option>
+                            <option value="DEPOSITO">DEPOSITO</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <footer class="modal-footer">
+                <button class="btn-cancel" (click)="closeDeliverModal()" [disabled]="loading">Cancelar</button>
+                <button class="btn-confirm" (click)="confirmDeliver()" [disabled]="loading">
+                    {{ loading ? 'Actualizando...' : 'Confirmar Entrega' }}
+                </button>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Modal de Devolución -->
+    <div class="modal-overlay animate-fade-in" *ngIf="showDevolucionModal">
+        <div class="form-modal devolution-modal">
+            <header class="modal-header">
+                <h3>Devolver Boleta: {{ boletaToReturn }}</h3>
+                <button class="close-btn" (click)="closeDevolucionModal()">×</button>
+            </header>
+            <div class="modal-body">
+                <p class="modal-intro">Selecciona los equipos de esta boleta que deseas marcar como <strong>DEVUELTO</strong>.</p>
+                
+                <div class="devolution-list">
+                    <div class="devolution-item header">
+                        <label class="checkbox-container">
+                            <input type="checkbox" 
+                                   [checked]="isAllDevolucionSelected()" 
+                                   (change)="toggleAllDevolucion()">
+                            <span class="checkmark"></span>
+                            <strong>Seleccionar Todos</strong>
+                        </label>
+                    </div>
+
+                    <div class="devolution-item" *ngFor="let eq of equiposParaDevolucion">
+                        <label class="checkbox-container">
+                            <input type="checkbox" 
+                                   [checked]="equiposSeleccionados.has(eq.id_mantenimiento!)" 
+                                   (change)="toggleDevolucionSelection(eq.id_mantenimiento)">
+                            <span class="checkmark"></span>
+                            <span>{{ eq.equipo }} - {{ eq.marca }} (Serie: {{ eq.nro_serie }})</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <footer class="modal-footer">
+                <button class="btn-cancel" (click)="closeDevolucionModal()" [disabled]="loading">Cancelar</button>
+                <button class="btn-confirm" (click)="confirmarDevolucion()" [disabled]="loading || equiposSeleccionados.size === 0">
+                    {{ loading ? 'Procesando...' : 'Confirmar y Generar PDF' }}
                 </button>
             </footer>
         </div>

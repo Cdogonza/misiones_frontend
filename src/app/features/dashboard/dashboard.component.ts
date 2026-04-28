@@ -65,13 +65,19 @@ export class DashboardComponent implements OnInit {
     // ── Ciclo de vida ──────────────────────────────────────────────────────
 
     ngOnInit(): void {
-        // Redirección: solo forzar al depósito si la oficina es depósito puro
-        // Los usuarios de jefatura (Jefe, 2do Jefe, Cte. de Ca.) pueden acceder al dashboard.
         const oficina = this.auth.getUserOficina();
-        const esDeposito = oficina?.toLowerCase().includes('deposito');
         const esJefatura = this.auth.isJefatura();
-        if (esDeposito && !esJefatura) {
-            this.router.navigate(['/deposito']);
+        const esDepositoBase = oficina === 'Deposito Base';
+
+        // Redirección de seguridad: solo Jefatura y Deposito Base entran aquí
+        if (!esJefatura && !esDepositoBase) {
+            if (this.auth.canAccessMantenimiento()) {
+                this.router.navigate(['/mantenimiento']);
+            } else if (oficina?.toLowerCase().includes('deposito')) {
+                this.router.navigate(['/deposito']);
+            } else {
+                this.router.navigate(['/selector']);
+            }
             return;
         }
 

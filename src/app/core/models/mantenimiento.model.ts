@@ -7,7 +7,7 @@ export interface Mantenimiento {
     procedencia: string;
     entrega: string;
     recibe: string;
-    tel_contacto: number;
+    tel_contacto: string;
     calidad: string;
     ubicacion: string;
     estado: string;
@@ -15,4 +15,5 @@ export interface Mantenimiento {
     desc_final?: string;
     tecnico: string;
     fecha_final?: string;
+    id_boleta?: string;
 }

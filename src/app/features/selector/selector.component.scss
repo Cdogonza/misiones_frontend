@@ -182,6 +182,19 @@ $glass-border: rgba(255, 255, 255, 0.15);
         }
     }
 
+    &.mantenimiento {
+        &:hover {
+            background: rgba(139, 92, 246, 0.12);
+            border-color: rgba(139, 92, 246, 0.4);
+            box-shadow: 0 8px 28px rgba(139, 92, 246, 0.12);
+        }
+
+        .panel-icon {
+            background: rgba(139, 92, 246, 0.15);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+    }
+
     .panel-icon {
         font-size: 1.8rem;
         min-width: 56px;

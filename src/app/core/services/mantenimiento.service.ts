@@ -28,12 +28,23 @@ export class MantenimientoService {
         return this.http.get<Mantenimiento>(`${this.API}/${id}`);
     }
 
+    private formatDates(data: any): any {
+        const formatted = { ...data };
+        if (formatted.fecha_entrada && typeof formatted.fecha_entrada === 'string') {
+            formatted.fecha_entrada = formatted.fecha_entrada.split('T')[0];
+        }
+        if (formatted.fecha_final && typeof formatted.fecha_final === 'string') {
+            formatted.fecha_final = formatted.fecha_final.split('T')[0];
+        }
+        return formatted;
+    }
+
     create(data: Mantenimiento): Observable<Mantenimiento> {
-        return this.http.post<Mantenimiento>(this.API, data);
+        return this.http.post<Mantenimiento>(this.API, this.formatDates(data));
     }
 
     update(id: number, data: Partial<Mantenimiento>): Observable<Mantenimiento> {
-        return this.http.put<Mantenimiento>(`${this.API}/${id}`, data);
+        return this.http.put<Mantenimiento>(`${this.API}/${id}`, this.formatDates(data));
     }
 
     delete(id: number): Observable<void> {
