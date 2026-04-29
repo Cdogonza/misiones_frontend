@@ -488,6 +488,10 @@ export class MantenimientoComponent implements OnInit {
         this.router.navigate(['/selector']);
     }
 
+    goToRepuestos(): void {
+        this.router.navigate(['/repuestos']);
+    }
+
     logout(): void {
         this.auth.logout();
         this.router.navigate(['/login']);
