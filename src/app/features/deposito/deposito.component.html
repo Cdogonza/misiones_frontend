@@ -22,6 +22,9 @@
             <button class="nav-item" (click)="onGestionarPedidos()">
                 <span class="icon">📋</span> Gestión de Pedidos
             </button>
+            <button class="nav-item" (click)="goToRepuestos()">
+                <span class="icon">⚙️</span> Repuestos
+            </button>
             @if (orderEditService.isActive) {
             <button class="nav-item edit-session-btn" (click)="onVolverEdicion()">
                 <span class="icon">✏️</span> Volver a la Edición

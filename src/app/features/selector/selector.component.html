@@ -35,13 +35,23 @@
         <span class="panel-arrow">→</span>
       </button>
       
-      <button class="panel-btn mantenimiento" (click)="goToMantenimiento()" *ngIf="auth.canAccessMantenimiento()">
+      <button class="panel-btn mantenimiento" (click)="goToMantenimiento()" *ngIf="canSeeMainMantenimiento()">
         <div class="panel-icon">🛠️</div>
         <div class="panel-info">
           <span class="panel-label">Mantenimiento</span>
-          <span class="panel-desc">Gestión técnica y reparaciones</span>
+          <span class="panel-desc">Gestión (Rec. y Entrega)</span>
         </div>
         <span class="panel-arrow">→</span>
+      </button>
+
+      <button class="panel-btn mantenimiento sala-i" (click)="goToSalaI()" *ngIf="canSeeSalaI()" 
+              style="border-color: rgba(34, 197, 94, 0.4); background: rgba(34, 197, 94, 0.05);">
+        <div class="panel-icon" style="color: #22c55e;">🔧</div>
+        <div class="panel-info">
+          <span class="panel-label" style="color: #22c55e;">SALA I</span>
+          <span class="panel-desc">Taller y Reparaciones</span>
+        </div>
+        <span class="panel-arrow" style="color: #22c55e;">→</span>
       </button>
 
     </div>

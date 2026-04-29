@@ -67,6 +67,18 @@ export const routes: Routes = [
         canActivate: [authGuard]
     },
     {
+        path: 'mantenimiento/sala-i',
+        loadComponent: () =>
+            import('./features/mantenimiento/salas/sala-i/sala-i.component').then(m => m.SalaIComponent),
+        canActivate: [authGuard]
+    },
+    {
+        path: 'repuestos',
+        loadComponent: () =>
+            import('./features/repuestos/repuestos.component').then(m => m.RepuestosComponent),
+        canActivate: [authGuard]
+    },
+    {
         path: '**',
         redirectTo: 'login'
     }
