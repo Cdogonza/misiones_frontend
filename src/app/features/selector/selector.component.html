@@ -17,7 +17,7 @@
     <!-- Botones de selección -->
     <div class="panel-grid">
 
-      <button class="panel-btn inspecciones" (click)="goToInspecciones()" *ngIf="canAccessInspecciones">
+      <button class="panel-btn inspecciones" (click)="goToInspecciones()">
         <div class="panel-icon">📋</div>
         <div class="panel-info">
           <span class="panel-label">Inspecciones</span>
@@ -26,20 +26,11 @@
         <span class="panel-arrow">→</span>
       </button>
 
-      <button class="panel-btn deposito" (click)="goToDeposito()" *ngIf="canAccessDeposito">
+      <button class="panel-btn deposito" (click)="goToDeposito()">
         <div class="panel-icon">📦</div>
         <div class="panel-info">
           <span class="panel-label">Deposito</span>
           <span class="panel-desc">Inventario y pedidos de materiales</span>
-        </div>
-        <span class="panel-arrow">→</span>
-      </button>
-      
-      <button class="panel-btn mantenimiento" (click)="goToMantenimiento()" *ngIf="auth.canAccessMantenimiento()">
-        <div class="panel-icon">🛠️</div>
-        <div class="panel-info">
-          <span class="panel-label">Mantenimiento</span>
-          <span class="panel-desc">Gestión técnica y reparaciones</span>
         </div>
         <span class="panel-arrow">→</span>
       </button>
