@@ -12,12 +12,18 @@ import { AuthService } from '../../core/services/auth.service';
 })
 export class SelectorComponent implements OnInit {
     username = '';
-    canAccessDeposito = false;
-    canAccessInspecciones = true;
 
-    constructor(public auth: AuthService, private router: Router) {}
+    constructor(private auth: AuthService, private router: Router) {}
 
     ngOnInit(): void {
+        // Si no es jefatura, redirigir según su perfil
+        if (!this.auth.isJefatura()) {
+            const oficina = this.auth.getUserOficina();
+            if (oficina?.toLowerCase().includes('deposito')) {
+                this.router.navigate(['/deposito']);
+            } else {
+                this.router.navigate(['/dashboard']);
+            }
         const hasJefatura = this.auth.isJefatura();
         const hasMantenimiento = this.auth.canAccessMantenimiento();
         const oficina = this.auth.getUserOficina() || '';
@@ -45,7 +51,6 @@ export class SelectorComponent implements OnInit {
             else this.router.navigate(['/dashboard']);
             return;
         }
-
         this.username = this.auth.getUserName() || 'Comandante';
     }
 

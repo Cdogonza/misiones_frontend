@@ -1,8 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { DataService } from '../../core/services/data.service';
 import { CartService } from '../../core/services/cart.service';
@@ -13,7 +12,7 @@ import { Componente, Unidad, CartItem } from '../../core/models/data.model';
 @Component({
   selector: 'app-deposito',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule],
   templateUrl: './deposito.component.html',
   styleUrl: './deposito.component.scss'
 })
