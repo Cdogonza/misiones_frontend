@@ -149,18 +149,34 @@ export class AuthService {
     }
 
     /** Devuelve true si el usuario pertenece a una oficina de jefatura
-     *  con acceso dual (dashboard + deposito): Jefe, 2do Jefe, Cte. de Ca. */
+     *  con acceso total al sistema. */
     isJefatura(): boolean {
         const oficina = this.getUserOficina();
         if (!oficina) return false;
-        const o = oficina.trim().toLowerCase();
-        return (
-            o === 'jefe' ||
-            o === '2do jefe' ||
-            o === 'cte. de ca.' ||
-            o === 'Cte. de Ca.' ||
-            o === 'Jefe de Seccion Abast.' ||
-            o === 'Jefe de Seccion Mant.'
-        );
+        const o = oficina.trim();
+        
+        const jefaturaOffices = [
+            'Jefe', 
+            '2do Jefe', 
+            'Cte. de Ca.', 
+            'Jefe de Secc. Abast.', 
+            'Jefe de Secc. Mant.'
+        ];
+        
+        return jefaturaOffices.includes(o);
+    }
+
+    canAccessMantenimiento(): boolean {
+        const oficina = this.getUserOficina();
+        if (!oficina) return false;
+        
+        const isSuperAdmin = this.isSuperAdmin();
+        const hasJefatura = this.isJefatura();
+        
+        const o = oficina.trim();
+        const isSala = o.includes('SALA');
+        const isRecYEntrega = o.includes('Rec. y Entrega');
+        
+        return isSuperAdmin || hasJefatura || isSala || isRecYEntrega;
     }
 }

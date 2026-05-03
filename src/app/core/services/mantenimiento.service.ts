@@ -50,4 +50,18 @@ export class MantenimientoService {
     delete(id: number): Observable<void> {
         return this.http.delete<void>(`${this.API}/${id}`);
     }
+
+    // --- Repuestos de Mantenimiento ---
+
+    getRepuestosByMantenimiento(id: number): Observable<any[]> {
+        return this.http.get<any[]>(`${this.API}/${id}/repuestos`);
+    }
+
+    saveRepuestosMantenimiento(id: number, repuestos: any[], tecnico: string, total: number): Observable<any> {
+        return this.http.post(`${this.API}/${id}/repuestos`, { repuestos, tecnico, total });
+    }
+
+    deleteRepuestosMantenimiento(id: number): Observable<any> {
+        return this.http.delete(`${this.API}/${id}/repuestos`);
+    }
 }

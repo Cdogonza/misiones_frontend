@@ -13,12 +13,12 @@
             
             <div class="nav-divider"></div>
               <p class="nav-hint">Panel de Control</p>
-            @if (auth.isJefatura()) {
+            @if (auth.isJefatura() || auth.isAdmin()) {
             <button class="nav-item btn-switch" (click)="goToSelector()">
                 <span class="icon">🔀</span> Cambiar Oficina
             </button>
             }
-            <button class="nav-item" (click)="goToRepuestos()">
+            <button class="nav-item btn-repuestos" (click)="goToRepuestos()">
                 <span class="icon">⚙️</span> Repuestos
             </button>
             <div class="nav-divider"></div>
@@ -88,9 +88,25 @@
         <!-- TABLE SECTION -->
         <div class="table-card">
             <div class="table-responsive">
+                <!-- Bulk Actions Toolbar -->
+                <div class="bulk-actions-bar animate-slide-down" *ngIf="selectedMantenimientos.size > 0">
+                    <div class="selection-count">
+                        <span>{{ selectedMantenimientos.size }}</span> equipos seleccionados
+                    </div>
+                    <button class="btn-bulk-action" (click)="openBulkLocationModal()">
+                        <span class="icon">🚚</span> Mover a Sala
+                    </button>
+                    <button class="btn-bulk-cancel" (click)="selectedMantenimientos.clear()">
+                        Cancelar
+                    </button>
+                </div>
+
                 <table class="data-table">
                     <thead>
                         <tr>
+                            <th class="checkbox-col">
+                                <input type="checkbox" [checked]="isAllSelected()" (change)="toggleAll()">
+                            </th>
                             <th>ID</th>
                             <th>Boleta</th>
                             <th>{{ activeFilter === 'activos' ? 'Fecha Ingreso' : 'Fecha Egreso' }}</th>
@@ -105,7 +121,10 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr *ngFor="let item of filteredMantenimientos">
+                        <tr *ngFor="let item of filteredMantenimientos" [class.row-selected]="selectedMantenimientos.has(item.id_mantenimiento!)">
+                            <td class="checkbox-cell">
+                                <input type="checkbox" [checked]="selectedMantenimientos.has(item.id_mantenimiento!)" (change)="toggleSelection(item.id_mantenimiento!)">
+                            </td>
                             <td>#{{ item.id_mantenimiento }}</td>
                             <td><span class="boleta-badge" *ngIf="item.id_boleta">{{ item.id_boleta }}</span></td>
                             <td>{{ (activeFilter === 'activos' ? item.fecha_entrada : item.fecha_final) | date:'dd/MM/yyyy' }}</td>
@@ -240,12 +259,34 @@
                                 <label>Ubicación</label>
                                 <input type="text" [(ngModel)]="currentRecord.ubicacion" name="ubicacion" [readonly]="!isEditing" placeholder="Ubicación por defecto">
                             </div>
+                        </div>
+                    </div>
 
+                    <!-- Fila exclusiva para Edición: Estado y Técnico -->
+                    <div class="form-grid edit-only-row" *ngIf="isEditing" style="margin-top: 20px; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div class="form-group">
+                            <label>Técnico Responsable</label>
+                            <input type="text" [(ngModel)]="currentRecord.tecnico" name="tecnico" placeholder="Nombre del técnico">
+                        </div>
+                        <div class="form-group">
+                            <label>Estado del Equipo</label>
+                            <select [(ngModel)]="currentRecord.estado" name="estado">
+                                <option value="Pendiente">Pendiente</option>
+                                <option value="Reparado">Reparado</option>
+                                <option value="Sin Reparación">Sin Reparación</option>
+                                <option value="AVISADO">AVISADO</option>
+                                <option value="DEVUELTO">DEVUELTO</option>
+                            </select>
                         </div>
                     </div>
 
                     <div class="form-group full-width">
-                        <label>Descripción Final / Observaciones</label>
+                        <label>Falla / Descripción Inicial (Recepción)</label>
+                        <textarea [(ngModel)]="currentRecord.desc_inicial" name="desc_inicial" rows="3" placeholder="Síntomas, falla reportada o estado al recibir..."></textarea>
+                    </div>
+
+                    <div class="form-group full-width" *ngIf="isEditing">
+                        <label>Informe Técnico Final (Reparación)</label>
                         <textarea [(ngModel)]="currentRecord.desc_final" name="desc_final" rows="3" placeholder="Detalles de la reparación..."></textarea>
                     </div>
                 </form>
@@ -281,7 +322,8 @@
                             <option value="SALA II">SALA II</option>
                             <option value="SALA III">SALA III</option>
                             <option value="SALA IV">SALA IV</option>
-                            <option value="SALA V">SALA V</option>
+                            <option value="SALA V Telef.">SALA V Telef.</option>
+                            <option value="SALA V Infca.">SALA V Infca.</option>
                             <option value="DEPOSITO">DEPOSITO</option>
                         </select>
                     </div>
@@ -332,6 +374,45 @@
                 <button class="btn-cancel" (click)="closeDevolucionModal()" [disabled]="loading">Cancelar</button>
                 <button class="btn-confirm" (click)="confirmarDevolucion()" [disabled]="loading || equiposSeleccionados.size === 0">
                     {{ loading ? 'Procesando...' : 'Confirmar y Generar PDF' }}
+                </button>
+            </footer>
+        </div>
+    </div>
+
+    <!-- BULK LOCATION MODAL -->
+    <div class="modal-overlay" *ngIf="showBulkLocationModal">
+        <div class="modal-content deliver-modal animate-fade-in">
+            <header class="modal-header">
+                <h3>Cambio de Ubicación Masiva</h3>
+                <button class="close-btn" (click)="showBulkLocationModal = false">×</button>
+            </header>
+            <div class="modal-body">
+                <p class="modal-intro">
+                    Se moverán <strong>{{ selectedMantenimientos.size }}</strong> equipos seleccionados a la ubicación especificada.
+                </p>
+                <div class="form-group">
+                    <label>Nueva Ubicación</label>
+                    <select [(ngModel)]="bulkLocation" name="bulkLocation" class="deliver-select">
+                        <option value="SALA I">SALA I</option>
+                        <option value="SALA II">SALA II</option>
+                        <option value="SALA III">SALA III</option>
+                        <option value="SALA IV">SALA IV</option>
+                        <option value="SALA V Infca">SALA V Infca</option>
+                        <option value="SALA V Telef.">SALA V Telef.</option>
+                        <option value="Rec. y Entrega">Rec. y Entrega</option>
+                        <option value="Deposito Base">Deposito Base</option>
+                        <option value="Jefe">Jefe</option>
+                        <option value="2do Jefe">2do Jefe</option>
+                        <option value="Cte. de Ca.">Cte. de Ca.</option>
+                        <option value="Jefe de Secc. Abast.">Jefe de Secc. Abast.</option>
+                        <option value="Jefe de Secc. Mant.">Jefe de Secc. Mant.</option>
+                    </select>
+                </div>
+            </div>
+            <footer class="modal-footer">
+                <button class="btn-cancel" (click)="showBulkLocationModal = false" [disabled]="loading">Cancelar</button>
+                <button class="btn-confirm" (click)="saveBulkLocation()" [disabled]="loading">
+                    {{ loading ? 'Actualizando...' : 'Confirmar Cambio' }}
                 </button>
             </footer>
         </div>

@@ -22,8 +22,11 @@
             <button class="nav-item" (click)="onGestionarPedidos()">
                 <span class="icon">📋</span> Gestión de Pedidos
             </button>
-            <button class="nav-item" (click)="goToRepuestos()">
+            <button class="nav-item btn-repuestos" (click)="goToRepuestos()">
                 <span class="icon">⚙️</span> Repuestos
+            </button>
+            <button class="nav-item" (click)="openUnitsModal()">
+                <span class="icon">🏢</span> Unidades
             </button>
             @if (orderEditService.isActive) {
             <button class="nav-item edit-session-btn" (click)="onVolverEdicion()">
@@ -80,7 +83,7 @@
                     <button class="btn-tool" (click)="onVerTodos()">
                         <span class="icon">👁️</span> Ver todos
                     </button>
-                     @if (auth.isAdmin()) {
+                     @if (auth.isAdmin() || auth.isJefatura()) {
                     <button class="btn-tool btn-new" (click)="onNuevoEquipo()">
                         <span class="icon">🏷️</span> Nuevo Equipo
                     </button>
@@ -130,7 +133,7 @@
                                         (click)="openCartModal(c)" 
                                         [disabled]="getAvailableStock(c) <= 0"
                                         [title]="getAvailableStock(c) <= 0 ? 'Sin stock disponible' : 'Añadir al Pedido'">🛒</button>
-                                @if (auth.isAdmin()) {
+                                @if (auth.isAdmin() || auth.isJefatura()) {
                                 <button class="btn-action edit" (click)="onEdit(c)" title="Editar">✏️</button>
                                 <button class="btn-action delete" (click)="onDelete(c.codigo_componente)"
                                     title="Eliminar">🗑️</button>
@@ -180,6 +183,105 @@
             <div class="modal-footer">
                 <button class="btn-cancel" (click)="closeCartModal()">Cancelar</button>
                 <button class="btn-confirm" (click)="confirmAddToCart()">🛒 Confirmar</button>
+            </div>
+        </div>
+    </div>
+    }
+
+    <!-- MODAL DE GESTIÓN DE UNIDADES -->
+    @if (showUnitsModal) {
+    <div class="modal-overlay animate-fade-in">
+        <div class="units-manager-modal glass-modal">
+            <header class="modal-header">
+                <div class="header-title">
+                    <span class="icon">🏢</span>
+                    <h3>Gestión de Unidades</h3>
+                </div>
+                <button class="close-btn" (click)="closeUnitsModal()">×</button>
+            </header>
+
+            <div class="modal-body">
+                <!-- Toolbar Interna del Modal -->
+                <div class="units-toolbar">
+                    <div class="search-box">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" [(ngModel)]="unitSearchText" placeholder="Filtrar por sigla o nombre..." class="search-input">
+                    </div>
+                    <button class="btn-add-unit" (click)="onNuevaUnidad()">
+                        <span class="icon">➕</span> Nueva Unidad
+                    </button>
+                </div>
+
+                <!-- Formulario de Edición/Creación (si está activo) -->
+                @if (showUnitForm) {
+                <div class="unit-form-wrapper animate-slide-down">
+                    <div class="unit-form-card">
+                        <div class="form-header">
+                            <h4>{{ isEditingUnit ? '✏️ Editar Registro' : '🆕 Nueva Unidad' }}</h4>
+                            <span class="badge">{{ isEditingUnit ? 'ID: ' + currentUnit.codigo_unidad : 'Borrador' }}</span>
+                        </div>
+                        
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Sigla / Unidad</label>
+                                <input type="text" [(ngModel)]="currentUnit.unidad" placeholder="Ej: Ca. Com. 6" class="form-input">
+                            </div>
+                            <div class="form-group full-width">
+                                <label>Nombre Institucional Completo</label>
+                                <input type="text" [(ngModel)]="currentUnit.nombre_de_la_unidad" placeholder="Ej: Compañía de Comunicaciones de Montaña 6" class="form-input">
+                            </div>
+                        </div>
+
+                        <div class="form-footer">
+                            <button class="btn-secondary" (click)="showUnitForm = false">Cancelar</button>
+                            <button class="btn-primary" (click)="onSaveUnit()">
+                                <span class="icon">💾</span> {{ isEditingUnit ? 'Actualizar' : 'Crear Unidad' }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                }
+
+                <!-- Tabla de Unidades -->
+                <div class="units-list-container glass-scroll">
+                    <table class="units-table">
+                        <thead>
+                            <tr>
+                                <th class="col-id">Cód.</th>
+                                <th class="col-sigla">Sigla</th>
+                                <th class="col-nombre">Nombre Completo</th>
+                                <th class="col-actions">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (u of filteredUnits; track u.codigo_unidad) {
+                            <tr class="unit-row">
+                                <td class="td-id">#{{ u.codigo_unidad }}</td>
+                                <td class="td-sigla">
+                                    <span class="unit-pill">{{ u.unidad }}</span>
+                                </td>
+                                <td class="td-nombre">{{ u.nombre_de_la_unidad }}</td>
+                                <td class="td-actions">
+                                    <div class="action-buttons">
+                                        <button class="btn-icon edit" (click)="onEditUnit(u)" title="Editar">
+                                            <span>✏️</span>
+                                        </button>
+                                        <button class="btn-icon delete" (click)="onDeleteUnit(u.codigo_unidad!)" title="Eliminar">
+                                            <span>🗑️</span>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            } @empty {
+                                <tr>
+                                    <td colspan="4" class="empty-results">
+                                        No se encontraron unidades que coincidan con la búsqueda.
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
