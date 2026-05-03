@@ -9,6 +9,30 @@ export class PdfService {
 
   constructor() { }
 
+  private addInstitutionalHeader(doc: jsPDF, title: string): number {
+    const pageWidth = doc.internal.pageSize.width;
+    
+    // Logo Central (Suponiendo que logo_boleta.png está en assets/img/)
+    try {
+      doc.addImage('assets/img/logo_boleta.png', 'PNG', (pageWidth / 2) - 15, 10, 30, 30);
+    } catch (e) {
+      // Si falla, intentamos con logo.png que sabemos que existe en public/
+      try {
+        doc.addImage('logo.png', 'PNG', (pageWidth / 2) - 15, 10, 30, 30);
+      } catch (e2) {
+        console.warn('No se pudo cargar el logo institucional');
+      }
+    }
+
+    doc.setFontSize(16);
+    doc.setTextColor(26, 58, 143);
+    doc.setFont('helvetica', 'bold');
+    doc.text(title, pageWidth / 2, 50, { align: 'center' });
+    
+    doc.setFont('helvetica', 'normal');
+    return 55; // Posición Y para continuar el contenido
+  }
+
   generateReceiptPDF(pedido: any, items: any[], unidades: any[], type: 'entrega' | 'recepcion' = 'entrega'): void {
     const doc = new jsPDF();
     const dateStr = pedido.created_at ? new Date(pedido.created_at).toLocaleDateString() : new Date().toLocaleDateString();
@@ -24,12 +48,10 @@ export class PdfService {
     const receiverName = type === 'entrega' ? nombreDestino : 'Bn. Com. Nro 2';
     const observations = type === 'entrega' ? pedido.observaciones : (pedido.observaciones_devolucion || 'Sin observaciones de recepción');
 
-    // Cabecera institucional
-    doc.setFontSize(18);
-    doc.setTextColor(26, 58, 143); // Azul institucional
-    doc.text(title, 105, 20, { align: 'center' });
+    // Header Institucional
+    const startY = this.addInstitutionalHeader(doc, title);
     
-    doc.setFontSize(10);
+    doc.setFontSize(9);
     doc.setTextColor(100);
     doc.text(`Fecha: ${dateStr}`, 190, 10, { align: 'right' });
     doc.text(`Nro. Pedido: #${pedido.idpedido}`, 190, 15, { align: 'right' });
@@ -37,25 +59,25 @@ export class PdfService {
     // Información del Préstamo
     doc.setFontSize(11);
     doc.setTextColor(0);
-    doc.text('INFORMACIÓN GENERAL', 15, 35);
-    doc.line(15, 37, 195, 37);
+    doc.text('INFORMACIÓN GENERAL', 15, startY + 5);
+    doc.line(15, startY + 7, 195, startY + 7);
 
     doc.setFont('helvetica', 'bold');
-    doc.text('Unidad que Entrega:', 15, 45);
+    doc.text('Unidad que Entrega:', 15, startY + 15);
     doc.setFont('helvetica', 'normal');
-    doc.text(giverName, 60, 45);
+    doc.text(giverName, 60, startY + 15);
 
     doc.setFont('helvetica', 'bold');
-    doc.text('Unidad que Recibe:', 15, 52);
+    doc.text('Unidad que Recibe:', 15, startY + 22);
     doc.setFont('helvetica', 'normal');
-    doc.text(receiverName, 60, 52);
+    doc.text(receiverName, 60, startY + 22);
 
     doc.setFont('helvetica', 'bold');
-    doc.text('Período de Préstamo:', 15, 59);
+    doc.text('Período de Préstamo:', 15, startY + 29);
     doc.setFont('helvetica', 'normal');
     const fInit = pedido.fecha_inicio || pedido.fechaInicio;
     const fEnd = pedido.fecha_fin || pedido.fechaFin;
-    doc.text(`Desde ${fInit || 'N/A'} hasta ${fEnd || 'N/A'}`, 60, 59);
+    doc.text(`Desde ${fInit || 'N/A'} hasta ${fEnd || 'N/A'}`, 60, startY + 29);
 
     // Tabla de Elementos
     const tableData = items.map(item => [
@@ -66,7 +88,7 @@ export class PdfService {
     ]);
 
     autoTable(doc, {
-      startY: 70,
+      startY: startY + 40,
       head: [['Cantidad', 'Componente / Material', 'Serie', 'Equipo / Origen']],
       body: tableData,
       theme: 'grid',
@@ -106,20 +128,17 @@ export class PdfService {
     const unidad = agrupada.unidad;
     const equipos = agrupada.equipos || [];
 
-    // Cabecera
-    doc.setFontSize(18);
-    doc.setTextColor(26, 58, 143);
-    doc.text('INFORME TÉCNICO DE UNIDAD', 105, 20, { align: 'center' });
+    const startY = this.addInstitutionalHeader(doc, 'PARTE DE EQUIPO');
 
     doc.setFontSize(14);
     doc.setTextColor(0);
-    doc.text(unidad.nombre_de_la_unidad || 'Sin Nombre', 105, 30, { align: 'center' });
+    doc.text(unidad.nombre_de_la_unidad || 'Sin Nombre', 105, startY + 5, { align: 'center' });
 
     doc.setFontSize(10);
     doc.setTextColor(100);
     doc.text(`Fecha de Reporte: ${new Date().toLocaleDateString()}`, 190, 10, { align: 'right' });
 
-    let currentY = 40;
+    let currentY = startY + 15;
 
     equipos.forEach((eq: any, index: number) => {
       // Verificar si necesitamos nueva página
@@ -169,10 +188,8 @@ export class PdfService {
     const entrega = firstRecord.entrega || '____________________';
     const boletaId = firstRecord.id_boleta || 'N/A';
     
-    // Cabecera institucional
-    doc.setFontSize(18);
-    doc.setTextColor(26, 58, 143); // Azul institucional
-    doc.text('BOLETA DE INGRESO A MANTENIMIENTO', 105, 20, { align: 'center' });
+    // Header Institucional
+    const startY = this.addInstitutionalHeader(doc, 'BOLETA DE INGRESO A MANTENIMIENTO');
     
     doc.setFontSize(10);
     doc.setTextColor(100);
@@ -182,23 +199,23 @@ export class PdfService {
     // Información General
     doc.setFontSize(11);
     doc.setTextColor(0);
-    doc.text('INFORMACIÓN DE INGRESO', 15, 35);
-    doc.line(15, 37, 195, 37);
+    doc.text('INFORMACIÓN DE INGRESO', 15, startY + 5);
+    doc.line(15, startY + 7, 195, startY + 7);
 
     doc.setFont('helvetica', 'bold');
-    doc.text('Procedencia (Unidad):', 15, 45);
+    doc.text('Procedencia (Unidad):', 15, startY + 15);
     doc.setFont('helvetica', 'normal');
-    doc.text(procedencia, 60, 45);
+    doc.text(procedencia, 60, startY + 15);
 
     doc.setFont('helvetica', 'bold');
-    doc.text('Entregado por:', 15, 52);
+    doc.text('Entregado por:', 15, startY + 22);
     doc.setFont('helvetica', 'normal');
-    doc.text(firstRecord.entrega || 'N/A', 60, 52);
+    doc.text(firstRecord.entrega || 'N/A', 60, startY + 22);
 
     doc.setFont('helvetica', 'bold');
-    doc.text('Tel. de Contacto:', 15, 59);
+    doc.text('Tel. de Contacto:', 15, startY + 29);
     doc.setFont('helvetica', 'normal');
-    doc.text(firstRecord.tel_contacto || 'N/A', 60, 59);
+    doc.text(firstRecord.tel_contacto || 'N/A', 60, startY + 29);
 
     // Tabla de Equipos
     const tableData = records.map(item => [
@@ -206,11 +223,11 @@ export class PdfService {
       item.equipo || 'N/A',
       item.marca || '-',
       item.nro_serie || '-',
-      item.desc_final || '-'
+      item.desc_inicial || '-'
     ]);
 
     autoTable(doc, {
-      startY: 70,
+      startY: startY + 40,
       head: [['ID', 'Equipo', 'Marca', 'Nro. Serie', 'Observaciones']],
       body: tableData,
       theme: 'grid',
@@ -229,7 +246,7 @@ export class PdfService {
     doc.setFontSize(10);
     doc.line(30, signaturesY, 80, signaturesY);
     doc.text('Firma Quien Entrega', 55, signaturesY + 5, { align: 'center' });
-    doc.text(entrega, 55, signaturesY + 10, { align: 'center' });
+    // doc.text(entrega, 55, signaturesY + 10, { align: 'center' }); // Se quita el nombre personal
 
     doc.line(130, signaturesY, 180, signaturesY);
     doc.text('Firma Quien Recibe', 155, signaturesY + 5, { align: 'center' });
@@ -252,10 +269,8 @@ export class PdfService {
     const recibe = firstRecord.recibe || '____________________'; 
     const entregaMantenimiento = firstRecord.tecnico || 'Mantenimiento';
     
-    // Cabecera institucional
-    doc.setFontSize(18);
-    doc.setTextColor(26, 58, 143); // Azul institucional
-    doc.text('BOLETA DE DEVOLUCIÓN DE MANTENIMIENTO', 105, 20, { align: 'center' });
+    // Header Institucional
+    const startY = this.addInstitutionalHeader(doc, 'BOLETA DE DEVOLUCIÓN DE MANTENIMIENTO');
     
     doc.setFontSize(10);
     doc.setTextColor(100);
@@ -265,16 +280,16 @@ export class PdfService {
     // Información General
     doc.setFontSize(11);
     doc.setTextColor(0);
-    doc.text('INFORMACIÓN DE DEVOLUCIÓN', 15, 35);
-    doc.line(15, 37, 195, 37);
+    doc.text('INFORMACIÓN DE DEVOLUCIÓN', 15, startY + 5);
+    doc.line(15, startY + 7, 195, startY + 7);
 
     doc.setFont('helvetica', 'bold');
-    doc.text('Procedencia:', 15, 45);
-    doc.text('Devuelto a:', 15, 52);
+    doc.text('Procedencia:', 15, startY + 15);
+    doc.text('Devuelto a:', 15, startY + 22);
     
     doc.setFont('helvetica', 'normal');
-    doc.text(procedencia, 60, 45);
-    doc.text(recibe, 60, 52);
+    doc.text(procedencia, 60, startY + 15);
+    doc.text(recibe, 60, startY + 22);
 
     // Formatting helper
     const formatDateStr = (date: string | undefined) => {
@@ -318,14 +333,86 @@ export class PdfService {
     doc.setFontSize(10);
     doc.line(30, signaturesY, 80, signaturesY);
     doc.text('Firma Quien Entrega (Mantenimiento)', 55, signaturesY + 5, { align: 'center' });
-    doc.text(entregaMantenimiento, 55, signaturesY + 10, { align: 'center' });
+    // doc.text(entregaMantenimiento, 55, signaturesY + 10, { align: 'center' }); // Se quita el nombre personal
 
     doc.line(130, signaturesY, 180, signaturesY);
     doc.text('Firma Quien Recibe (Usuario)', 155, signaturesY + 5, { align: 'center' });
-    doc.text(recibe, 155, signaturesY + 10, { align: 'center' });
+    // doc.text(recibe, 155, signaturesY + 10, { align: 'center' }); // Se quita el nombre personal
     
     // Guardar
     const fileName = `Boleta_Devolucion_${originalBoletaId.replace(/\//g, '-')}.pdf`;
+    doc.save(fileName);
+  }
+
+  generatePresupuestoPDF(mantenimiento: any, items: any[], tecnico: string): void {
+    const doc = new jsPDF();
+    const dateStr = new Date().toLocaleDateString();
+    
+    // Header Institucional
+    const startY = this.addInstitutionalHeader(doc, 'PRESUPUESTO TÉCNICO DE REPARACIÓN');
+    
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Fecha: ${dateStr}`, 190, 10, { align: 'right' });
+    doc.text(`ID Mantenimiento: #${mantenimiento.id_mantenimiento}`, 190, 15, { align: 'right' });
+
+    // Información del Equipo
+    doc.setFontSize(11);
+    doc.setTextColor(0);
+    doc.text('INFORMACIÓN DEL EQUIPO', 15, startY + 5);
+    doc.line(15, startY + 7, 195, startY + 7);
+
+    doc.setFont('helvetica', 'bold');
+    doc.text('Equipo:', 15, startY + 15);
+    doc.text('Marca/Modelo:', 15, startY + 22);
+    doc.text('Nro. Serie:', 15, startY + 29);
+    doc.text('Técnico:', 105, startY + 29);
+    
+    doc.setFont('helvetica', 'normal');
+    doc.text(mantenimiento.equipo || 'N/A', 60, startY + 15);
+    doc.text(mantenimiento.marca || '-', 60, startY + 22);
+    doc.text(mantenimiento.nro_serie || '-', 60, startY + 29);
+    doc.text(tecnico, 125, startY + 29);
+
+    // Tabla de Repuestos
+    const tableData = items.map(item => [
+      item.nombre,
+      item.descripcion || '-',
+      item.cantidad || 1,
+      `$${item.costo_unitario?.toLocaleString()}`,
+      `$${((item.cantidad || 1) * (item.costo_unitario || 0)).toLocaleString()}`
+    ]);
+
+    const total = items.reduce((acc, item) => acc + ((item.cantidad || 1) * (item.costo_unitario || 0)), 0);
+
+    autoTable(doc, {
+      startY: startY + 40,
+      head: [['Repuesto', 'Descripción', 'Cant.', 'Precio Unit.', 'Subtotal']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { fillColor: [26, 58, 143], textColor: [255, 255, 255] },
+      styles: { fontSize: 9, cellPadding: 4 },
+      columnStyles: {
+        2: { halign: 'center' },
+        3: { halign: 'right' },
+        4: { halign: 'right' }
+      }
+    });
+
+    const finalY = (doc as any).lastAutoTable.finalY + 10;
+    
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text(`TOTAL PRESUPUESTO: $${total.toLocaleString()}`, 195, finalY, { align: 'right' });
+
+    // Firmas
+    const pageHeight = doc.internal.pageSize.height;
+    doc.setFontSize(10);
+    doc.line(75, pageHeight - 40, 135, pageHeight - 40);
+    doc.text('Firma Responsable Técnico', 105, pageHeight - 35, { align: 'center' });
+    doc.text(tecnico, 105, pageHeight - 30, { align: 'center' });
+
+    const fileName = `Presupuesto_Mantenimiento_${mantenimiento.id_mantenimiento}.pdf`;
     doc.save(fileName);
   }
 }

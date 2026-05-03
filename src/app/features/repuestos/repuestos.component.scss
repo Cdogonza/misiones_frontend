@@ -175,6 +175,19 @@ $glass-border: rgba(255, 255, 255, 0.15);
     align-items: center;
     margin-bottom: 40px;
 
+    .header-left {
+        display: flex;
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 12px;
+
+        @media (min-width: 768px) {
+            flex-direction: row;
+            align-items: center;
+            gap: 30px;
+        }
+    }
+
     h1 {
         font-size: 2.2rem;
         font-weight: 800;
@@ -190,6 +203,39 @@ $glass-border: rgba(255, 255, 255, 0.15);
             background: $accent;
             border-radius: 2px;
             margin-top: 8px;
+        }
+    }
+}
+
+.btn-back {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.8);
+    padding: 10px 20px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(10px);
+
+    .icon {
+        font-size: 1.1rem;
+        transition: transform 0.3s ease;
+    }
+
+    &:hover {
+        background: rgba($accent, 0.1);
+        border-color: $accent;
+        color: $accent;
+        transform: translateX(-5px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+
+        .icon {
+            transform: translateX(-3px);
         }
     }
 }

@@ -12,6 +12,7 @@ export interface Mantenimiento {
     ubicacion: string;
     estado: string;
     presupuesto: string;
+    desc_inicial?: string;
     desc_final?: string;
     tecnico: string;
     fecha_final?: string;

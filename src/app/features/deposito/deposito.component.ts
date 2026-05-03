@@ -36,6 +36,14 @@ export class DepositoComponent implements OnInit {
   // Modo Edición
   editMode = false;
 
+  // Gestión de Unidades
+  showUnitsModal = false;
+  allUnits: Unidad[] = [];
+  unitSearchText = '';
+  showUnitForm = false;
+  isEditingUnit = false;
+  currentUnit: Partial<Unidad> = {};
+
   constructor(
     public auth: AuthService,
     private dataService: DataService,
@@ -46,11 +54,104 @@ export class DepositoComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.auth.getProfile().subscribe({
+      next: (data) => { 
+        this.profile = data; 
+        const oficina = data.oficina || '';
+        const isSuperAdmin = this.auth.isSuperAdmin();
+        const hasJefatura = this.auth.isJefatura();
+        const isDeposito = oficina === 'Deposito Base';
+
+        if (!isDeposito && !hasJefatura && !isSuperAdmin) {
+          alert('Acceso denegado: Tu oficina no tiene permisos para acceder al Depósito.');
+          this.router.navigate(['/selector']);
+        }
+      },
+      error: () => { 
+        console.error('Error al cargar perfil.'); 
+        this.router.navigate(['/login']);
+      }
+    });
+    
     this.initDepositoData();
-    this.loadProfile();
 
     this.route.queryParams.subscribe(params => {
       this.editMode = params['editMode'] === 'true' && this.orderEditService.isActive;
+    });
+  }
+
+  // --- MÉTODOS DE UNIDADES ---
+  openUnitsModal(): void {
+    this.showUnitsModal = true;
+    this.loadAllUnits();
+  }
+
+  closeUnitsModal(): void {
+    this.showUnitsModal = false;
+    this.showUnitForm = false;
+  }
+
+  loadAllUnits(): void {
+    this.dataService.getUnidades().subscribe({
+      next: (data) => this.allUnits = data,
+      error: () => console.error('Error al cargar unidades')
+    });
+  }
+
+  get filteredUnits(): Unidad[] {
+    if (!this.unitSearchText) return this.allUnits;
+    const search = this.unitSearchText.toLowerCase();
+    return this.allUnits.filter(u => 
+      u.unidad?.toLowerCase().includes(search) || 
+      u.nombre_de_la_unidad?.toLowerCase().includes(search)
+    );
+  }
+
+  onNuevaUnidad(): void {
+    this.isEditingUnit = false;
+    this.currentUnit = { unidad: '', nombre_de_la_unidad: '' };
+    this.showUnitForm = true;
+  }
+
+  onEditUnit(u: Unidad): void {
+    this.isEditingUnit = true;
+    this.currentUnit = { ...u };
+    this.showUnitForm = true;
+  }
+
+  onSaveUnit(): void {
+    if (!this.currentUnit.unidad || !this.currentUnit.nombre_de_la_unidad) {
+      alert('Por favor, completa los campos obligatorios.');
+      return;
+    }
+
+    if (this.isEditingUnit && this.currentUnit.codigo_unidad) {
+      this.dataService.updateUnidad(this.currentUnit.codigo_unidad, this.currentUnit).subscribe({
+        next: () => {
+          this.loadAllUnits();
+          this.showUnitForm = false;
+          alert('Unidad actualizada con éxito.');
+        }
+      });
+    } else {
+      this.dataService.createUnidad(this.currentUnit).subscribe({
+        next: () => {
+          this.loadAllUnits();
+          this.showUnitForm = false;
+          alert('Unidad creada con éxito.');
+        }
+      });
+    }
+  }
+
+  onDeleteUnit(id: number): void {
+    if (!confirm('¿Estás seguro de eliminar esta unidad?')) return;
+    this.dataService.deleteUnidad(id).subscribe({
+      next: () => {
+        this.allUnits = this.allUnits.filter(u => u.codigo_unidad !== id);
+        alert('Unidad eliminada.');
+      },
+      error: () => alert('Error al eliminar unidad. Asegúrese de que no tenga equipos asociados.')
     });
   }
 

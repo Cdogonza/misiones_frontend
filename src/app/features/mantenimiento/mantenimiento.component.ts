@@ -49,6 +49,11 @@ export class MantenimientoComponent implements OnInit {
     showSuggestions = false;
     loadingUnidades = false;
 
+    // Bulk Selection
+    selectedMantenimientos: Set<number> = new Set();
+    showBulkLocationModal = false;
+    bulkLocation = 'SALA I';
+
     constructor(
         public auth: AuthService,
         private mantenimientoService: MantenimientoService,
@@ -56,6 +61,69 @@ export class MantenimientoComponent implements OnInit {
         private pdfService: PdfService,
         private router: Router
     ) { }
+
+    toggleSelection(id: number): void {
+        if (this.selectedMantenimientos.has(id)) {
+            this.selectedMantenimientos.delete(id);
+        } else {
+            this.selectedMantenimientos.add(id);
+        }
+    }
+
+    toggleAll(): void {
+        if (this.selectedMantenimientos.size === this.filteredMantenimientos.length) {
+            this.selectedMantenimientos.clear();
+        } else {
+            this.filteredMantenimientos.forEach(m => this.selectedMantenimientos.add(m.id_mantenimiento!));
+        }
+    }
+
+    isAllSelected(): boolean {
+        return this.filteredMantenimientos.length > 0 && 
+               this.selectedMantenimientos.size === this.filteredMantenimientos.length;
+    }
+
+    openBulkLocationModal(): void {
+        if (this.selectedMantenimientos.size === 0) {
+            alert('Por favor, selecciona al menos un equipo.');
+            return;
+        }
+        this.showBulkLocationModal = true;
+    }
+
+    saveBulkLocation(): void {
+        const selectedIds = Array.from(this.selectedMantenimientos);
+        this.loading = true;
+
+        // Utilizamos forkJoin para actualizar todos los registros en paralelo
+        const updateRequests = selectedIds.map(id => {
+            const record = this.mantenimientos.find(m => m.id_mantenimiento === id);
+            if (record) {
+                return this.mantenimientoService.update(id, { ...record, ubicacion: this.bulkLocation });
+            }
+            return null;
+        }).filter(req => req !== null);
+
+        if (updateRequests.length === 0) {
+            this.loading = false;
+            return;
+        }
+
+        forkJoin(updateRequests).subscribe({
+            next: () => {
+                this.loading = false;
+                this.showBulkLocationModal = false;
+                this.selectedMantenimientos.clear();
+                this.loadData();
+                alert(`Se han movido ${updateRequests.length} equipos a ${this.bulkLocation} con éxito.`);
+            },
+            error: (err) => {
+                this.loading = false;
+                console.error('Error en actualización masiva:', err);
+                alert('Ocurrió un error al intentar mover los equipos.');
+            }
+        });
+    }
 
     ngOnInit(): void {
         this.loadProfileAndCheckAccess();
@@ -140,10 +208,12 @@ export class MantenimientoComponent implements OnInit {
     }
 
     get canCreate(): boolean {
-        const creatorOffices = ['Cte. de Ca.', 'Jefe de Secc. Mant.', 'Rec. y Entrega'];
         const oficina = this.profile.oficina || '';
-        const isAdmin = this.auth.isAdmin() || this.auth.isSuperAdmin();
-        return creatorOffices.some(off => oficina.includes(off)) || isAdmin;
+        const isSuperAdmin = this.auth.isSuperAdmin();
+        const hasJefatura = this.auth.isJefatura();
+        const isRecYEntrega = oficina === 'Rec. y Entrega';
+        
+        return isSuperAdmin || hasJefatura || isRecYEntrega;
     }
 
     getEmptyRecord(): Mantenimiento {
@@ -161,6 +231,7 @@ export class MantenimientoComponent implements OnInit {
             estado: 'Pendiente',
             presupuesto: 'S/D',
             tecnico: '',
+            desc_inicial: '',
             desc_final: '',
             fecha_final: '1000-01-01'
         };
@@ -182,15 +253,29 @@ export class MantenimientoComponent implements OnInit {
 
     get filteredMantenimientos(): Mantenimiento[] {
         let result = this.mantenimientos;
+
+        // 1. Filtro por Oficina del Usuario (Seguridad de Datos)
+        const userOficina = this.profile.oficina || '';
+        const isSuperAdmin = this.auth.isSuperAdmin();
+        const hasJefatura = this.auth.isJefatura();
+        const isRecYEntrega = userOficina === 'Rec. y Entrega';
         
-        // 1. Filtrar por estado
+        // Solo Jefatura, SuperAdmin y Rec. y Entrega tienen visión total del pool de mantenimiento
+        const hasFullVision = hasJefatura || isSuperAdmin || isRecYEntrega;
+
+        if (!hasFullVision) {
+            // Usuarios de SALAS u otros solo ven equipos cuya ubicación coincida exactamente con su oficina
+            result = result.filter(m => m.ubicacion === userOficina);
+        }
+        
+        // 2. Filtrar por estado
         if (this.activeFilter === 'activos') {
             result = result.filter(m => m.estado !== 'DEVUELTO');
         } else {
             result = result.filter(m => m.estado === 'DEVUELTO');
         }
 
-        // 2. Filtrar por texto
+        // 3. Filtrar por texto
         if (this.searchText) {
             const search = this.searchText.toLowerCase();
             result = result.filter(m =>
@@ -201,7 +286,7 @@ export class MantenimientoComponent implements OnInit {
             );
         }
         
-        // 3. Filtrar por boleta
+        // 4. Filtrar por boleta
         if (this.searchBoletaText) {
             const searchBoleta = this.searchBoletaText.toLowerCase();
             result = result.filter(m => 
@@ -219,10 +304,11 @@ export class MantenimientoComponent implements OnInit {
     }
 
     countByFilter(type: 'activos' | 'inactivos'): number {
+        const filtered = this.filteredMantenimientos;
         if (type === 'activos') {
-            return this.mantenimientos.filter(m => m.estado !== 'DEVUELTO').length;
+            return filtered.filter(m => m.estado !== 'DEVUELTO').length;
         } else {
-            return this.mantenimientos.filter(m => m.estado === 'DEVUELTO').length;
+            return filtered.filter(m => m.estado === 'DEVUELTO').length;
         }
     }
 
@@ -240,6 +326,15 @@ export class MantenimientoComponent implements OnInit {
     onEdit(item: Mantenimiento): void {
         this.isEditing = true;
         this.currentRecord = { ...item };
+        
+        // Formatear fechas para que sean compatibles con <input type="date">
+        if (this.currentRecord.fecha_entrada) {
+            this.currentRecord.fecha_entrada = this.currentRecord.fecha_entrada.split('T')[0];
+        }
+        if (this.currentRecord.fecha_final && this.currentRecord.fecha_final !== '1000-01-01') {
+            this.currentRecord.fecha_final = this.currentRecord.fecha_final.split('T')[0];
+        }
+
         this.showModal = true;
     }
 

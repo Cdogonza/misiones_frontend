@@ -69,8 +69,44 @@ export const routes: Routes = [
     {
         path: 'mantenimiento/sala-i',
         loadComponent: () =>
-            import('./features/mantenimiento/salas/sala-i/sala-i.component').then(m => m.SalaIComponent),
-        canActivate: [authGuard]
+            import('./features/mantenimiento/salas/sala-i/sala-gestion.component').then(m => m.SalaGestionComponent),
+        canActivate: [authGuard],
+        data: { sala: 'SALA I' }
+    },
+    {
+        path: 'mantenimiento/sala-ii',
+        loadComponent: () =>
+            import('./features/mantenimiento/salas/sala-i/sala-gestion.component').then(m => m.SalaGestionComponent),
+        canActivate: [authGuard],
+        data: { sala: 'SALA II' }
+    },
+    {
+        path: 'mantenimiento/sala-iii',
+        loadComponent: () =>
+            import('./features/mantenimiento/salas/sala-i/sala-gestion.component').then(m => m.SalaGestionComponent),
+        canActivate: [authGuard],
+        data: { sala: 'SALA III' }
+    },
+    {
+        path: 'mantenimiento/sala-iv',
+        loadComponent: () =>
+            import('./features/mantenimiento/salas/sala-i/sala-gestion.component').then(m => m.SalaGestionComponent),
+        canActivate: [authGuard],
+        data: { sala: 'SALA IV' }
+    },
+    {
+        path: 'mantenimiento/sala-v-telef',
+        loadComponent: () =>
+            import('./features/mantenimiento/salas/sala-i/sala-gestion.component').then(m => m.SalaGestionComponent),
+        canActivate: [authGuard],
+        data: { sala: 'SALA V Telef.' }
+    },
+    {
+        path: 'mantenimiento/sala-v-infca',
+        loadComponent: () =>
+            import('./features/mantenimiento/salas/sala-i/sala-gestion.component').then(m => m.SalaGestionComponent),
+        canActivate: [authGuard],
+        data: { sala: 'SALA V Infca.' }
     },
     {
         path: 'repuestos',
