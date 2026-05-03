@@ -25,9 +25,17 @@ export class SelectorComponent implements OnInit {
         { name: 'SALA V Infca.', path: '/mantenimiento/sala-v-infca' }
     ];
 
-    constructor(public auth: AuthService, private router: Router) {}
+    constructor(private auth: AuthService, private router: Router) {}
 
     ngOnInit(): void {
+        // Si no es jefatura, redirigir según su perfil
+        if (!this.auth.isJefatura()) {
+            const oficina = this.auth.getUserOficina();
+            if (oficina?.toLowerCase().includes('deposito')) {
+                this.router.navigate(['/deposito']);
+            } else {
+                this.router.navigate(['/dashboard']);
+            }
         const hasJefatura = this.auth.isJefatura();
         const isAdmin = this.auth.isAdmin();
         const hasMantenimiento = this.auth.canAccessMantenimiento();
@@ -68,7 +76,6 @@ export class SelectorComponent implements OnInit {
             }
             return;
         }
-
         this.username = this.auth.getUserName() || 'Comandante';
     }
 
