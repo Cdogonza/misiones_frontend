@@ -12,9 +12,11 @@
         <nav class="nav-menu">
             <div class="nav-divider"></div>
             <p class="nav-hint">Panel de Control</p>
+            @if (auth.isJefatura()) {
             <button class="nav-item btn-switch" (click)="goToSelector()">
                 <span class="icon">🔀</span> Cambiar Oficina
             </button>
+            }
             <button class="btn-logout" (click)="logout()">
                 <span class="icon">⬅</span> Cerrar Sesión
             </button>

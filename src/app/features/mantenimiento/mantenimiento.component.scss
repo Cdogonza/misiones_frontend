@@ -117,28 +117,48 @@ $glass-border: rgba(255, 255, 255, 0.15);
     margin-top: auto;
 }
 
-.nav-item.btn-switch {
+.btn-switch-panel {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: rgba(99, 202, 183, 0.1);
+    border: 1px solid rgba(99, 202, 183, 0.3);
+    border-radius: 10px;
     color: #63cab7;
-    background: rgba(99, 202, 183, 0.08);
-    border: 1px solid rgba(99, 202, 183, 0.25);
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s;
 
     &:hover {
-        background: rgba(99, 202, 183, 0.18);
-        color: #63cab7;
+        background: rgba(99, 202, 183, 0.2);
         border-color: rgba(99, 202, 183, 0.5);
         transform: translateY(-2px);
     }
 }
 
-.nav-item.btn-repuestos {
-    color: #cd853f; /* Peru Brown */
-    background: rgba(205, 133, 63, 0.08);
-    border: 1px solid rgba(205, 133, 63, 0.25);
+.btn-repuestos-panel {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: rgba(205, 133, 63, 0.1);
+    border: 1px solid rgba(205, 133, 63, 0.3);
+    border-radius: 10px;
+    color: #cd853f;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s;
     margin-top: 5px;
 
     &:hover {
-        background: rgba(205, 133, 63, 0.18);
-        color: #cd853f;
+        background: rgba(205, 133, 63, 0.2);
         border-color: rgba(205, 133, 63, 0.5);
         transform: translateY(-2px);
     }
@@ -155,6 +175,9 @@ $glass-border: rgba(255, 255, 255, 0.15);
     border-radius: 10px;
     color: #fca5a5;
     cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
     transition: all 0.2s;
 
     &:hover {

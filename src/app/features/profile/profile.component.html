@@ -6,7 +6,7 @@
             </button>
         </div>
         <div class="profile-avatar-large">
-            {{ (activeTab === 'edit' ? profile.username?.[0] : 'N')?.[0]?.toUpperCase() || 'U' }}
+            {{ (activeTab === 'edit' ? (profile.username ? profile.username.charAt(0) : 'U') : 'N')?.toUpperCase() || 'U' }}
         </div>
         <h2 class="profile-username-title">{{ activeTab === 'edit' ? profile.username : activeTab === 'users' ? 'Usuarios' : 'Nuevo Usuario'}}</h2>
         <p class="profile-subtitle">{{ activeTab === 'edit' ? profile.email : activeTab === 'users' ? '' : 'Registro Institucional'}}</p>
@@ -190,8 +190,16 @@
                             <td><span class="badge-rol" [attr.data-rol]="user.rol">{{ user.rol || 'integrante' }}</span></td>
                             <td class="actions-cell">
                                 <button class="btn-reset-pass" (click)="resetUserPassword(user)" [disabled]="saving || !isAdmin" title="Resetear Contraseña">
-                                    <span class="icon">🔑</span> Resetear
+                                    <span class="icon">🔑</span>
                                 </button>
+                                @if (isSuperAdmin) {
+                                    <button class="btn-edit-user" (click)="onEditUser(user)" [disabled]="saving" title="Editar Usuario">
+                                        <span class="icon">✏️</span>
+                                    </button>
+                                    <button class="btn-delete-user" (click)="deleteUser(user)" [disabled]="saving" title="Eliminar Usuario">
+                                        <span class="icon">🗑️</span>
+                                    </button>
+                                }
                             </td>
                         </tr>
                         } @empty {
@@ -210,4 +218,49 @@
 
         }
     </main>
+
+    <!-- Modal de Edición de Usuario (Solo SuperAdmin) -->
+    @if (editingUser) {
+    <div class="modal-overlay animate-fade-in">
+        <div class="edit-user-modal">
+            <header class="modal-header">
+                <h3><span class="icon">✏️</span> Editar Usuario: {{ editingUser.username }}</h3>
+                <button class="close-btn" (click)="cancelEdit()">×</button>
+            </header>
+            <div class="modal-body">
+                <form class="profile-form" (submit)="$event.preventDefault()">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Correo Electrónico</label>
+                            <input type="email" [(ngModel)]="editUserData.email" name="editEmail" placeholder="correo@misiones.gov.ar">
+                        </div>
+                        <div class="form-group">
+                            <label>Oficina / Unidad</label>
+                            <select [(ngModel)]="editUserData.oficina" name="editOficina" class="form-select">
+                                <option value="" disabled>Seleccione una oficina</option>
+                                @for (off of offices; track off) {
+                                    <option [value]="off">{{ off }}</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Rol Institucional</label>
+                            <select [(ngModel)]="editUserData.rol" name="editRol" class="form-select">
+                                <option value="integrante">Integrante</option>
+                                <option value="admin">Administrador</option>
+                                <option value="superAdmin">Super Administrador</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <footer class="modal-footer">
+                <button type="button" class="btn-cancel-profile" (click)="cancelEdit()">Cancelar</button>
+                <button type="button" class="btn-save-profile" (click)="saveUserEdit()" [disabled]="saving">
+                    {{ saving ? 'Guardando...' : 'Guardar Cambios' }}
+                </button>
+            </footer>
+        </div>
+    </div>
+    }
 </div>

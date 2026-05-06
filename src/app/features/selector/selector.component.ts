@@ -28,14 +28,28 @@ export class SelectorComponent implements OnInit {
     constructor(private auth: AuthService, private router: Router) {}
 
     ngOnInit(): void {
-        // Si no es jefatura, redirigir según su perfil
-        if (!this.auth.isJefatura()) {
-            const oficina = this.auth.getUserOficina();
-            if (oficina?.toLowerCase().includes('deposito')) {
+        // Si no es jefatura ni superadmin, redirigir según su perfil
+        if (!this.auth.isJefatura() && !this.auth.isSuperAdmin()) {
+            const oficina = this.auth.getUserOficina() || '';
+            
+            if (oficina.toLowerCase().includes('deposito')) {
                 this.router.navigate(['/deposito']);
-            } else {
-                this.router.navigate(['/dashboard']);
+                return;
+            } 
+            
+            if (this.auth.canAccessMantenimiento()) {
+                const userSala = this.salas.find(s => oficina.includes(s.name));
+                if (userSala) {
+                    this.router.navigate([userSala.path]);
+                } else {
+                    this.router.navigate(['/mantenimiento']);
+                }
+                return;
             }
+
+            this.router.navigate(['/dashboard']);
+            return;
+        }
         const hasJefatura = this.auth.isJefatura();
         const isAdmin = this.auth.isAdmin();
         const hasMantenimiento = this.auth.canAccessMantenimiento();
@@ -43,7 +57,7 @@ export class SelectorComponent implements OnInit {
         const isDeposito = oficina.toLowerCase().includes('deposito');
         
         // Determinar si es una oficina específica
-        const isRecYEntrega = oficina.trim() === 'Rec. y Entrega';
+        const isRecYEntrega = oficina.toLowerCase().includes('rec. y entrega');
         
         // Buscar si el usuario pertenece a alguna sala
         const userSala = this.salas.find(s => oficina.includes(s.name));
@@ -86,7 +100,7 @@ export class SelectorComponent implements OnInit {
         
         // Rec. y Entrega y Salas ven el botón de Mantenimiento (o sus subsecciones)
         const isSala = this.salas.some(s => oficina.includes(s.name));
-        return oficina === 'Rec. y Entrega' || isSala || hasJefatura || isSuperAdmin;
+        return oficina.toLowerCase().includes('rec. y entrega') || isSala || hasJefatura || isSuperAdmin;
     }
 
     canSeeSala(salaName: string): boolean {

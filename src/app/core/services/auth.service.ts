@@ -79,6 +79,14 @@ export class AuthService {
         return this.http.put(`${this.USER_API}/reset-password/${id}`, {});
     }
 
+    updateUserAdmin(id: number, data: { email: string, rol: string, oficina: string }): Observable<any> {
+        return this.http.put(`${this.USER_API}/${id}`, data);
+    }
+
+    deleteUser(id: number): Observable<any> {
+        return this.http.delete(`${this.USER_API}/${id}`);
+    }
+
     logout(): void {
         localStorage.removeItem(this.TOKEN_KEY);
     }
@@ -153,14 +161,14 @@ export class AuthService {
     isJefatura(): boolean {
         const oficina = this.getUserOficina();
         if (!oficina) return false;
-        const o = oficina.trim();
+        const o = oficina.trim().toLowerCase();
         
         const jefaturaOffices = [
-            'Jefe', 
-            '2do Jefe', 
-            'Cte. de Ca.', 
-            'Jefe de Secc. Abast.', 
-            'Jefe de Secc. Mant.'
+            'jefe', 
+            '2do jefe', 
+            'cte. de ca.', 
+            'jefe de seccion abast.', 
+            'jefe de seccion mant.'
         ];
         
         return jefaturaOffices.includes(o);
@@ -173,9 +181,9 @@ export class AuthService {
         const isSuperAdmin = this.isSuperAdmin();
         const hasJefatura = this.isJefatura();
         
-        const o = oficina.trim();
-        const isSala = o.includes('SALA');
-        const isRecYEntrega = o.includes('Rec. y Entrega');
+        const o = oficina.toLowerCase();
+        const isSala = o.includes('sala');
+        const isRecYEntrega = o.includes('rec. y entrega');
         
         return isSuperAdmin || hasJefatura || isSala || isRecYEntrega;
     }

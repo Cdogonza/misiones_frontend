@@ -1,5 +1,139 @@
 $primary: #1a3a8f; $primary-dark: #0b1e50; $accent: #f5c518; $text-light: #ffffff; $text-muted: rgba(255, 255, 255, 0.65); $glass-bg: rgba(255, 255, 255, 0.08); $glass-border: rgba(255, 255, 255, 0.15);
 .dashboard-container { display: flex; min-height: 100vh; background: linear-gradient(150deg, $primary-dark 0%, $primary 45%, #0d2266 100%); color: $text-light; font-family: 'Inter', sans-serif; }
+
+/* SIDEBAR */
+.sidebar {
+    width: 260px;
+    background: rgba(0, 0, 0, 0.25);
+    backdrop-filter: blur(15px);
+    border-right: 1px solid $glass-border;
+    display: flex;
+    flex-direction: column;
+    padding: 24px 0;
+    transition: all 0.3s ease;
+}
+
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    margin-bottom: 40px;
+    gap: 12px;
+
+    .mini-logo {
+        width: 45px;
+        height: 45px;
+        object-fit: contain;
+        filter: drop-shadow(0 0 8px rgba($accent, 0.4));
+    }
+
+    .header-text {
+        h2 {
+            font-size: 1.1rem;
+            margin: 0;
+            font-weight: 700;
+            color: $accent;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        p {
+            font-size: 0.8rem;
+            margin: 0;
+            color: $text-muted;
+        }
+    }
+}
+
+.nav-menu {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 0 12px;
+}
+
+.nav-divider {
+    height: 1px;
+    background: $glass-border;
+    margin: 16px 12px;
+}
+
+.nav-hint {
+    padding: 0 16px;
+    font-size: 0.75rem;
+    color: $text-muted;
+    font-style: italic;
+}
+
+.btn-switch-panel {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: rgba(99, 202, 183, 0.1);
+    border: 1px solid rgba(99, 202, 183, 0.3);
+    border-radius: 10px;
+    color: #63cab7;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s;
+
+    &:hover {
+        background: rgba(99, 202, 183, 0.2);
+        border-color: rgba(99, 202, 183, 0.5);
+        transform: translateY(-2px);
+    }
+}
+
+.btn-repuestos-panel {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: rgba(205, 133, 63, 0.1);
+    border: 1px solid rgba(205, 133, 63, 0.3);
+    border-radius: 10px;
+    color: #cd853f;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    margin-top: 5px;
+
+    &:hover {
+        background: rgba(205, 133, 63, 0.2);
+        border-color: rgba(205, 133, 63, 0.5);
+        transform: translateY(-2px);
+    }
+}
+
+.btn-logout {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 10px;
+    color: #fca5a5;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s;
+
+    &:hover {
+        background: rgba(239, 68, 68, 0.2);
+        transform: translateY(-2px);
+    }
+}
 .main-content {
     flex: 1;
     display: flex;

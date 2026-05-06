@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { Location } from '@angular/common';
 import { AuthService } from '../../core/services/auth.service';
 import { UserProfile, RegisterRequest } from '../../core/models/user.model';
 
@@ -33,9 +34,14 @@ export class ProfileComponent implements OnInit {
         rol: 'integrante'
     };
 
+    // Gestión de edición de usuarios
+    editingUser: UserProfile | null = null;
+    editUserData = { email: '', rol: '', oficina: '' };
+
     constructor(
         private auth: AuthService,
-        private router: Router
+        private router: Router,
+        private location: Location
     ) { }
 
     ngOnInit(): void {
@@ -197,22 +203,66 @@ export class ProfileComponent implements OnInit {
         });
     }
 
+    // --- NUEVAS FUNCIONES DE GESTIÓN PARA SUPERADMIN ---
+
+    onEditUser(user: UserProfile): void {
+        this.editingUser = { ...user };
+        this.editUserData = {
+            email: user.email || '',
+            rol: user.rol || 'integrante',
+            oficina: user.oficina || ''
+        };
+    }
+
+    cancelEdit(): void {
+        this.editingUser = null;
+    }
+
+    saveUserEdit(): void {
+        if (!this.editingUser) return;
+        
+        this.saving = true;
+        this.auth.updateUserAdmin(this.editingUser.idusuario, this.editUserData).subscribe({
+            next: () => {
+                alert('Usuario actualizado correctamente.');
+                this.editingUser = null;
+                this.loadUsers();
+                this.saving = false;
+            },
+            error: (err) => {
+                alert('Error al actualizar usuario: ' + (err.error?.message || 'Error del servidor'));
+                this.saving = false;
+            }
+        });
+    }
+
+    deleteUser(user: UserProfile): void {
+        if (!confirm(`¿Estás COMPLETAMENTE seguro de eliminar al usuario "${user.username}"? Esta acción no se puede deshacer.`)) return;
+
+        this.saving = true;
+        this.auth.deleteUser(user.idusuario).subscribe({
+            next: () => {
+                alert('Usuario eliminado correctamente.');
+                this.loadUsers();
+                this.saving = false;
+            },
+            error: (err) => {
+                alert('Error al eliminar usuario: ' + (err.error?.message || 'Error del servidor'));
+                this.saving = false;
+            }
+        });
+    }
+
     handleError(err: any): void {
         alert('Error al procesar la solicitud: ' + (err.error?.message || 'Error del servidor'));
         this.saving = false;
     }
 
     get backLabel(): string {
-        const oficina = this.auth.getUserOficina();
-        return oficina?.toLowerCase().includes('deposito') ? 'Volver al Depósito' : 'Volver al Dashboard';
+        return 'Volver';
     }
 
     goBack(): void {
-        const oficina = this.auth.getUserOficina();
-        if (oficina?.toLowerCase().includes('deposito')) {
-            this.router.navigate(['/deposito']);
-        } else {
-            this.router.navigate(['/dashboard']);
-        }
+        this.location.back();
     }
 }

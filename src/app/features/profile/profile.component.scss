@@ -427,6 +427,12 @@ $glass-bg-profile: rgba(255, 255, 255, 0.08);
         border: 1px solid rgba(245, 197, 24, 0.3);
     }
     
+    &[data-rol='superAdmin'] {
+        background: rgba(255, 69, 58, 0.2);
+        color: #ff453a;
+        border: 1px solid rgba(255, 69, 58, 0.3);
+    }
+    
     &[data-rol='integrante'] {
         background: rgba(255, 255, 255, 0.05);
         color: rgba(255, 255, 255, 0.6);
@@ -466,5 +472,105 @@ $glass-bg-profile: rgba(255, 255, 255, 0.08);
     small {
         color: rgba(255, 255, 255, 0.4);
         font-size: 0.85rem;
+    }
+}
+
+/* User Action Buttons */
+.btn-edit-user, .btn-delete-user {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 8px;
+    transition: all 0.3s;
+
+    &:hover:not(:disabled) {
+        transform: translateY(-2px);
+    }
+}
+
+.btn-edit-user:hover:not(:disabled) {
+    background: rgba(34, 197, 94, 0.2);
+    border-color: #22c55e;
+    color: #22c55e;
+}
+
+.btn-delete-user:hover:not(:disabled) {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: #ef4444;
+    color: #ef4444;
+}
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.edit-user-modal {
+    background: #0b1e50;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    width: 90%;
+    max-width: 600px;
+    overflow: hidden;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+
+    .modal-header {
+        padding: 24px 32px;
+        background: rgba(255, 255, 255, 0.05);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        h3 {
+            margin: 0;
+            color: $accent-profile;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .close-btn {
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 2rem;
+            cursor: pointer;
+            line-height: 1;
+
+            &:hover {
+                color: #fff;
+            }
+        }
+    }
+
+    .modal-body {
+        padding: 32px;
+    }
+
+    .modal-footer {
+        padding: 24px 32px;
+        background: rgba(255, 255, 255, 0.03);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        justify-content: flex-end;
+        gap: 16px;
     }
 }

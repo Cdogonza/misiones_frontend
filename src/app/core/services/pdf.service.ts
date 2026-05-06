@@ -33,6 +33,23 @@ export class PdfService {
     return 55; // Posición Y para continuar el contenido
   }
 
+  private formatDate(date: any): string {
+    if (!date || date === '1000-01-01' || date === 'N/A') return 'N/A';
+    
+    try {
+      const d = new Date(date);
+      if (isNaN(d.getTime())) return date;
+      
+      const day = d.getUTCDate().toString().padStart(2, '0');
+      const month = (d.getUTCMonth() + 1).toString().padStart(2, '0');
+      const year = d.getUTCFullYear();
+      
+      return `${day}/${month}/${year}`;
+    } catch (e) {
+      return date;
+    }
+  }
+
   generateReceiptPDF(pedido: any, items: any[], unidades: any[], type: 'entrega' | 'recepcion' = 'entrega'): void {
     const doc = new jsPDF();
     const dateStr = pedido.created_at ? new Date(pedido.created_at).toLocaleDateString() : new Date().toLocaleDateString();
@@ -75,9 +92,9 @@ export class PdfService {
     doc.setFont('helvetica', 'bold');
     doc.text('Período de Préstamo:', 15, startY + 29);
     doc.setFont('helvetica', 'normal');
-    const fInit = pedido.fecha_inicio || pedido.fechaInicio;
-    const fEnd = pedido.fecha_fin || pedido.fechaFin;
-    doc.text(`Desde ${fInit || 'N/A'} hasta ${fEnd || 'N/A'}`, 60, startY + 29);
+    const fInit = this.formatDate(pedido.fecha_inicio || pedido.fechaInicio);
+    const fEnd = this.formatDate(pedido.fecha_fin || pedido.fechaFin);
+    doc.text(`Desde ${fInit} hasta ${fEnd}`, 60, startY + 29);
 
     // Tabla de Elementos
     const tableData = items.map(item => [
@@ -291,24 +308,15 @@ export class PdfService {
     doc.text(procedencia, 60, startY + 15);
     doc.text(recibe, 60, startY + 22);
 
-    // Formatting helper
-    const formatDateStr = (date: string | undefined) => {
-      if (!date || date === '1000-01-01') return '-';
-      // Mantenemos solo la parte YYYY-MM-DD o parseamos
-      const parts = date.split('T')[0].split('-');
-      if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
-      return new Date(date).toLocaleDateString();
-    };
-
     // Tabla de Equipos
     const tableData = records.map(item => [
       item.id_mantenimiento || 'N/A',
-      formatDateStr(item.fecha_entrada),
+      this.formatDate(item.fecha_entrada),
       item.equipo || 'N/A',
       item.marca || '-',
       item.nro_serie || '-',
       item.desc_final || 'Devuelto al usuario',
-      formatDateStr(item.fecha_final)
+      this.formatDate(item.fecha_final)
     ]);
 
     autoTable(doc, {

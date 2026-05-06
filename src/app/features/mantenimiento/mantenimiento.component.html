@@ -2,7 +2,7 @@
     <!-- SIDEBAR -->
     <aside class="sidebar">
         <div class="sidebar-header">
-            <img src="logo.png" alt="Logo" class="mini-logo">
+            <img src="/logo.png" alt="Logo" class="mini-logo">
             <div class="header-text">
                 <h2>Mantenimiento</h2>
             
@@ -13,12 +13,12 @@
             
             <div class="nav-divider"></div>
               <p class="nav-hint">Panel de Control</p>
-            @if (auth.isJefatura() || auth.isAdmin()) {
-            <button class="nav-item btn-switch" (click)="goToSelector()">
+            @if (auth.isJefatura()) {
+            <button class="btn-switch-panel" (click)="goToSelector()">
                 <span class="icon">🔀</span> Cambiar Oficina
             </button>
             }
-            <button class="nav-item btn-repuestos" (click)="goToRepuestos()">
+            <button class="btn-repuestos-panel" (click)="goToRepuestos()">
                 <span class="icon">⚙️</span> Repuestos
             </button>
             <div class="nav-divider"></div>
