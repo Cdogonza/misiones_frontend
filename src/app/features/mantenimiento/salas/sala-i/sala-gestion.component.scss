@@ -1,5 +1,5 @@
 $primary: #1a3a8f; $primary-dark: #0b1e50; $accent: #f5c518; $text-light: #ffffff; $text-muted: rgba(255, 255, 255, 0.65); $glass-bg: rgba(255, 255, 255, 0.08); $glass-border: rgba(255, 255, 255, 0.15);
-.dashboard-container { display: flex; min-height: 100vh; background: linear-gradient(150deg, $primary-dark 0%, $primary 45%, #0d2266 100%); color: $text-light; font-family: 'Inter', sans-serif; }
+.dashboard-container { display: flex; min-height: 100vh; background: linear-gradient(150deg, $primary-dark 0%, $primary 45%, #0d2266 100%); color: $text-light; font-family: 'Inter', sans-serif; transform: scale(0.85); transform-origin: top left; width: 117.65%; height: 117.65%; position: fixed; }
 
 /* SIDEBAR */
 .sidebar {

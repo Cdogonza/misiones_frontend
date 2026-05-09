@@ -44,30 +44,21 @@
         <span class="panel-arrow">→</span>
       </button>
 
-      <!-- Botón Desplegable SALAS -->
-      <div class="dropdown-container" *ngIf="hasAnySalaAccess()">
-        <button class="panel-btn maintenance salas-dropdown-btn" 
-                (click)="toggleSalas()"
-                [class.active]="showSalasDropdown">
-          <div class="panel-icon">🔧</div>
-          <div class="panel-info">
-            <span class="panel-label">SALAS</span>
-            <span class="panel-desc">Gestión de Talleres</span>
-          </div>
-          <span class="panel-arrow">{{ showSalasDropdown ? '↓' : '→' }}</span>
-        </button>
+    </div>
 
-        <div class="salas-dropdown-content animate-fade-in" *ngIf="showSalasDropdown">
-          <ng-container *ngFor="let sala of salas">
-            <button class="sala-item" 
-                    (click)="goToSala(sala.path)"
-                    *ngIf="canSeeSala(sala.name)">
-              <span class="dot"></span> {{ sala.name }}
-            </button>
-          </ng-container>
-        </div>
+    <!-- Grid de SALAS -->
+    <div class="salas-section" *ngIf="hasAnySalaAccess()">
+      <h3 class="section-title">Salas de Mantenimiento</h3>
+      <div class="salas-grid">
+        @for (sala of salas; track sala.name) {
+          <button class="sala-card" 
+                  (click)="goToSala(sala.path)"
+                  *ngIf="canSeeSala(sala.name)">
+            <div class="sala-icon">🔧</div>
+            <span class="sala-name">{{ sala.name }}</span>
+          </button>
+        }
       </div>
-
     </div>
 
     <!-- Salir -->

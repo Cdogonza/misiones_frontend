@@ -9,6 +9,13 @@ $glass-bg-profile: rgba(255, 255, 255, 0.08);
     background: linear-gradient(135deg, #0b1e50 0%, #1a3a8f 100%);
     color: $text-light-profile;
     font-family: 'Inter', sans-serif;
+
+    // Reducción del 15% (Escala 0.85)
+    transform: scale(0.85);
+    transform-origin: top left;
+    width: 117.65%;
+    height: 117.65%;
+    position: fixed;
 }
 
 .profile-sidebar {

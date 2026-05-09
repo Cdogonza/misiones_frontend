@@ -44,7 +44,7 @@ export class PdfService {
       const month = (d.getUTCMonth() + 1).toString().padStart(2, '0');
       const year = d.getUTCFullYear();
       
-      return `${day}/${month}/${year}`;
+      return `${year}-${month}-${day}`;
     } catch (e) {
       return date;
     }
@@ -52,7 +52,7 @@ export class PdfService {
 
   generateReceiptPDF(pedido: any, items: any[], unidades: any[], type: 'entrega' | 'recepcion' = 'entrega'): void {
     const doc = new jsPDF();
-    const dateStr = pedido.created_at ? new Date(pedido.created_at).toLocaleDateString() : new Date().toLocaleDateString();
+    const dateStr = this.formatDate(pedido.created_at || new Date());
     
     // Buscar nombre de unidad destino
     const nombreDestino = pedido.unidad_destino_nombre || 
@@ -199,7 +199,7 @@ export class PdfService {
 
     const doc = new jsPDF();
     const firstRecord = records[0];
-    const dateStr = firstRecord.fecha_entrada || new Date().toLocaleDateString();
+    const dateStr = this.formatDate(firstRecord.fecha_entrada || new Date());
     
     const procedencia = firstRecord.procedencia || 'N/A';
     const entrega = firstRecord.entrega || '____________________';
@@ -211,7 +211,7 @@ export class PdfService {
     doc.setFontSize(10);
     doc.setTextColor(100);
     doc.text(`Fecha: ${dateStr}`, 190, 10, { align: 'right' });
-    doc.text(`Nro. Boleta: ${boletaId}`, 190, 15, { align: 'right' });
+    doc.text(`Nro. Boleta: ${String(boletaId)}`, 190, 15, { align: 'right' });
 
     // Información General
     doc.setFontSize(11);
@@ -222,17 +222,17 @@ export class PdfService {
     doc.setFont('helvetica', 'bold');
     doc.text('Procedencia (Unidad):', 15, startY + 15);
     doc.setFont('helvetica', 'normal');
-    doc.text(procedencia, 60, startY + 15);
+    doc.text(String(procedencia), 60, startY + 15);
 
     doc.setFont('helvetica', 'bold');
     doc.text('Entregado por:', 15, startY + 22);
     doc.setFont('helvetica', 'normal');
-    doc.text(firstRecord.entrega || 'N/A', 60, startY + 22);
+    doc.text(String(firstRecord.entrega || 'N/A'), 60, startY + 22);
 
     doc.setFont('helvetica', 'bold');
     doc.text('Tel. de Contacto:', 15, startY + 29);
     doc.setFont('helvetica', 'normal');
-    doc.text(firstRecord.tel_contacto || 'N/A', 60, startY + 29);
+    doc.text(String(firstRecord.tel_contacto || 'N/A'), 60, startY + 29);
 
     // Tabla de Equipos
     const tableData = records.map(item => [
@@ -279,7 +279,7 @@ export class PdfService {
 
     const doc = new jsPDF();
     const firstRecord = records[0];
-    const dateStr = new Date().toLocaleDateString();
+    const dateStr = this.formatDate(new Date());
     
     const procedencia = firstRecord.procedencia || 'N/A';
     // Para devolución, invierto: quien lo recibió originalmente o el mantenedor ahora es el que entrega

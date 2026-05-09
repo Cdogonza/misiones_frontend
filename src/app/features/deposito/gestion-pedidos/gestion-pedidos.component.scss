@@ -11,6 +11,13 @@ $primary-dark: #1a3a8f;
     background: linear-gradient(135deg, $primary-dark 0%, #0d1b4a 100%);
     color: #fff;
     font-family: 'Inter', sans-serif;
+    
+    // Reducción del 15% (Escala 0.85)
+    transform: scale(0.85);
+    transform-origin: top left;
+    width: 117.65%;
+    height: 117.65%;
+    position: fixed;
 }
 
 // Reutilización Sidebar

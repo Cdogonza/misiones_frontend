@@ -18,9 +18,6 @@
                 <span class="icon">🔀</span> Cambiar Oficina
             </button>
             }
-            <button class="btn-repuestos-panel" (click)="goToRepuestos()">
-                <span class="icon">⚙️</span> Repuestos
-            </button>
             <div class="nav-divider"></div>
     
             <button class="btn-logout" (click)="logout()">
@@ -62,6 +59,7 @@
                 <span class="btn-search-icon">🔍</span>
                 <input type="text" 
                        [(ngModel)]="searchText" 
+                       (ngModelChange)="currentPage = 1"
                        placeholder="Buscar general..." 
                        class="tool-search-input">
             </div>
@@ -69,6 +67,7 @@
                 <span class="btn-search-icon">📄</span>
                 <input type="text" 
                        [(ngModel)]="searchBoletaText" 
+                       (ngModelChange)="currentPage = 1"
                        placeholder="Filtrar por Boleta (ej: BOL-XXXX)..." 
                        class="tool-search-input">
             </div>
@@ -116,18 +115,36 @@
                             <th>Procedencia</th>
                             <th>Ubicación</th>
                             <th>Estado</th>
-                            <th>Técnico</th>
                             <th class="actions-col">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr *ngFor="let item of filteredMantenimientos" [class.row-selected]="selectedMantenimientos.has(item.id_mantenimiento!)">
-                            <td class="checkbox-cell">
+                        <tr *ngFor="let item of displayMantenimientos" 
+                            [class.row-selected]="selectedMantenimientos.has(item.id_mantenimiento!)"
+                            [class.group-header]="item.isGroupHeader"
+                            [class.group-child]="item.isGroupChild"
+                            [class.has-multiple]="item.hasMultiple"
+                            (click)="item.hasMultiple && toggleBoleta(item.id_boleta)">
+                            
+                            <td class="checkbox-cell" (click)="$event.stopPropagation()">
                                 <input type="checkbox" [checked]="selectedMantenimientos.has(item.id_mantenimiento!)" (change)="toggleSelection(item.id_mantenimiento!)">
                             </td>
-                            <td>#{{ item.id_mantenimiento }}</td>
-                            <td><span class="boleta-badge" *ngIf="item.id_boleta">{{ item.id_boleta }}</span></td>
-                            <td>{{ (activeFilter === 'activos' ? item.fecha_entrada : item.fecha_final) | date:'dd/MM/yyyy' }}</td>
+                            <td>
+                                <span class="expand-icon" *ngIf="item.hasMultiple">
+                                    {{ item.isExpanded ? '▼' : '▶' }}
+                                </span>
+                                #{{ item.id_mantenimiento }}
+                            </td>
+                            <td>
+                                <div class="boleta-info" *ngIf="item.isGroupHeader">
+                                    <span class="boleta-badge clickable" *ngIf="item.id_boleta" (click)="$event.stopPropagation(); verBoletaIngreso(item.id_boleta)">
+                                        {{ item.id_boleta }}
+                                    </span>
+                                    <span class="group-count" *ngIf="item.hasMultiple">({{ item.groupCount }})</span>
+                                </div>
+                                <span class="child-indicator" *ngIf="item.isGroupChild">↳</span>
+                            </td>
+                            <td>{{ (activeFilter === 'activos' ? item.fecha_entrada : item.fecha_final) | date:'yyyy-MM-dd' }}</td>
                             <td><strong>{{ item.equipo }}</strong></td>
                             <td>{{ item.marca }}</td>
                             <td><code>{{ item.nro_serie }}</code></td>
@@ -138,8 +155,7 @@
                                     {{ item.estado }}
                                 </span>
                             </td>
-                            <td>{{ item.tecnico }}</td>
-                            <td class="actions-cell">
+                            <td class="actions-cell" (click)="$event.stopPropagation()">
                                 <button class="btn-action edit" (click)="onEdit(item)" title="Editar">
                                     ✏️
                                 </button>
@@ -159,15 +175,15 @@
                         </tr>
 
                         <!-- Empty State Row -->
-                        <tr *ngIf="filteredMantenimientos.length === 0 && !loading">
-                            <td colspan="10" class="empty-msg">
+                        <tr *ngIf="displayMantenimientos.length === 0 && !loading">
+                            <td colspan="12" class="empty-msg">
                                 No se encontraron registros de mantenimiento.
                             </td>
                         </tr>
 
                         <!-- Loading Row -->
                         <tr *ngIf="loading">
-                            <td colspan="10">
+                            <td colspan="12">
                                 <div class="loader-container">
                                     <div class="spinner"></div>
                                     <p>Cargando datos...</p>
@@ -176,6 +192,33 @@
                         </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- PAGINATION CONTROLS -->
+            <div class="pagination-container">
+                <div class="pagination-info">
+                    Mostrando página <strong>{{ currentPage }}</strong> de {{ totalPages || 1 }}
+                </div>
+                <div class="pagination-actions">
+                    <button class="btn-page" [disabled]="currentPage === 1 || totalPages <= 1" (click)="prevPage()">
+                        Anterior
+                    </button>
+                    
+                    <div class="page-numbers">
+                        <button *ngFor="let p of pages" 
+                                class="btn-number" 
+                                [class.active]="p === currentPage"
+                                (click)="setPage(p)">
+                            {{ p }}
+                        </button>
+                        <!-- Fallback si no hay páginas -->
+                        <button *ngIf="totalPages <= 1" class="btn-number active">1</button>
+                    </div>
+
+                    <button class="btn-page" [disabled]="currentPage === totalPages || totalPages <= 1" (click)="nextPage()">
+                        Siguiente
+                    </button>
+                </div>
             </div>
         </div>
     </main>
@@ -216,13 +259,18 @@
                             </div>
                             <div class="form-group autocomplete-container">
                                 <label>Procedencia</label>
-                                <input type="text" 
-                                       [(ngModel)]="currentRecord.procedencia" 
-                                       name="procedencia" 
-                                       placeholder="Unidad de origen"
-                                       (input)="onProcedenciaInput()"
-                                       (blur)="onProcedenciaBlur()"
-                                       autocomplete="off">
+                                <div class="input-with-button">
+                                    <input type="text" 
+                                           [(ngModel)]="currentRecord.procedencia" 
+                                           name="procedencia" 
+                                           placeholder="Unidad de origen"
+                                           (input)="onProcedenciaInput()"
+                                           (blur)="onProcedenciaBlur()"
+                                           autocomplete="off">
+                                    <button type="button" class="btn-add-inline" (click)="onAddNewUnidad()" title="Crear nueva unidad">
+                                        ➕
+                                    </button>
+                                </div>
                                 
                                 <ul class="suggestions-list" *ngIf="showSuggestions">
                                     <li *ngFor="let u of filteredUnidades" (mousedown)="selectUnidad(u)">
@@ -290,6 +338,30 @@
                         <textarea [(ngModel)]="currentRecord.desc_final" name="desc_final" rows="3" placeholder="Detalles de la reparación..."></textarea>
                     </div>
                 </form>
+
+                <!-- PENDING RECORDS LIST -->
+                <div class="pending-list" *ngIf="pendingRecords.length > 0 && !isEditing">
+                    <h4>Equipos añadidos a la boleta actual:</h4>
+                    <div class="pending-items">
+                        <div class="pending-item" *ngFor="let item of pendingRecords; let i = index">
+                            <div class="item-info">
+                                <span class="item-num">#{{ i + 1 }}</span>
+                                <div class="item-details">
+                                    <strong>{{ item.equipo }}</strong>
+                                    <span>{{ item.marca }} - S/N: {{ item.nro_serie }}</span>
+                                </div>
+                            </div>
+                            <div class="item-actions">
+                                <button class="btn-item-edit" (click)="editPendingRecord(i)">
+                                    ✏️ Modificar
+                                </button>
+                                <button class="btn-item-delete" (click)="removePendingRecord(i)">
+                                    🗑️
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <footer class="modal-footer">

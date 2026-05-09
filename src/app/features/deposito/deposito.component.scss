@@ -12,6 +12,13 @@ $glass-border: rgba(255, 255, 255, 0.15);
     background: linear-gradient(150deg, $primary-dark 0%, $primary 45%, #0d2266 100%);
     color: $text-light;
     font-family: 'Inter', sans-serif;
+    
+    // Reducción del 15% (Escala 0.85)
+    transform: scale(0.85);
+    transform-origin: top left;
+    width: 117.65%;
+    height: 117.65%;
+    position: fixed; // Para evitar saltos de scroll y mantener la escala
 }
 
 /* SIDEBAR */

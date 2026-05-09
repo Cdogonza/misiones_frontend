@@ -14,7 +14,6 @@ export class SelectorComponent implements OnInit {
     username = '';
     canAccessDeposito = false;
     canAccessInspecciones = true;
-    showSalasDropdown = false;
 
     salas = [
         { name: 'SALA I', path: '/mantenimiento/sala-i' },
@@ -116,10 +115,6 @@ export class SelectorComponent implements OnInit {
 
     hasAnySalaAccess(): boolean {
         return this.salas.some(s => this.canSeeSala(s.name));
-    }
-
-    toggleSalas(): void {
-        this.showSalasDropdown = !this.showSalasDropdown;
     }
 
     goToInspecciones(): void {

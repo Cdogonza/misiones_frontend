@@ -10,6 +10,7 @@ import { PdfService } from '../../core/services/pdf.service';
 import { Mantenimiento } from '../../core/models/mantenimiento.model';
 import { UserProfile } from '../../core/models/user.model';
 import { Unidad } from '../../core/models/data.model';
+import { MantenimientoStateService } from '../../core/services/mantenimiento-state.service';
 
 @Component({
     selector: 'app-mantenimiento',
@@ -54,12 +55,20 @@ export class MantenimientoComponent implements OnInit {
     showBulkLocationModal = false;
     bulkLocation = 'SALA I';
 
+    // Grouping state
+    expandedBoletas: Set<string> = new Set();
+
+    // Pagination state
+    currentPage = 1;
+    pageSize = 6;
+
     constructor(
         public auth: AuthService,
         private mantenimientoService: MantenimientoService,
         private dataService: DataService,
         private pdfService: PdfService,
-        private router: Router
+        private router: Router,
+        private maintenanceStateService: MantenimientoStateService
     ) { }
 
     toggleSelection(id: number): void {
@@ -129,6 +138,28 @@ export class MantenimientoComponent implements OnInit {
         this.loadProfileAndCheckAccess();
         this.loadData();
         this.loadUnidades();
+        this.restoreState();
+    }
+
+    restoreState(): void {
+        const saved = this.maintenanceStateService.getSavedState();
+        if (saved) {
+            this.currentRecord = saved.currentRecord;
+            this.pendingRecords = saved.pendingRecords;
+            this.isEditing = saved.isEditing;
+            this.showModal = saved.showModal;
+            this.maintenanceStateService.clearState();
+        }
+    }
+
+    onAddNewUnidad(): void {
+        this.maintenanceStateService.saveState({
+            currentRecord: this.currentRecord,
+            pendingRecords: this.pendingRecords,
+            isEditing: this.isEditing,
+            showModal: this.showModal
+        });
+        this.router.navigate(['/dashboard/edit', 'unidad', 0], { queryParams: { from: 'mantenimiento' } });
     }
 
     loadUnidades(): void {
@@ -297,9 +328,97 @@ export class MantenimientoComponent implements OnInit {
         return result;
     }
 
+    get displayMantenimientos(): any[] {
+        const filtered = this.filteredMantenimientos;
+        const grouped: { [key: string]: Mantenimiento[] } = {};
+        const boletaOrder: string[] = [];
+        
+        filtered.forEach(m => {
+            const key = m.id_boleta || `SINGLE-${m.id_mantenimiento}`;
+            if (!grouped[key]) {
+                grouped[key] = [];
+                boletaOrder.push(key);
+            }
+            grouped[key].push(m);
+        });
+
+        // Paginar las Boletas (Grupos)
+        const totalBoletas = boletaOrder.length;
+        const startIndex = (this.currentPage - 1) * this.pageSize;
+        const pagedBoletaKeys = boletaOrder.slice(startIndex, startIndex + this.pageSize);
+
+        const rows: any[] = [];
+        pagedBoletaKeys.forEach(key => {
+            const items = grouped[key];
+            const isExpanded = this.expandedBoletas.has(key);
+            
+            rows.push({
+                ...items[0],
+                isGroupHeader: true,
+                hasMultiple: items.length > 1,
+                isExpanded: isExpanded,
+                groupCount: items.length
+            });
+
+            if (isExpanded && items.length > 1) {
+                for (let i = 1; i < items.length; i++) {
+                    rows.push({
+                        ...items[i],
+                        isGroupChild: true
+                    });
+                }
+            }
+        });
+
+        return rows;
+    }
+
+    get totalPages(): number {
+        const filtered = this.filteredMantenimientos;
+        const boletaCount = new Set(filtered.map(m => m.id_boleta || `SINGLE-${m.id_mantenimiento}`)).size;
+        return Math.ceil(boletaCount / this.pageSize);
+    }
+
+    get pages(): number[] {
+        const total = this.totalPages;
+        if (total <= 7) {
+            return Array.from({ length: total }, (_, i) => i + 1);
+        }
+        // Logic for "1 2 ... 10" could be added but let's keep it simple for now
+        return Array.from({ length: total }, (_, i) => i + 1);
+    }
+
+    setPage(page: number): void {
+        if (page >= 1 && page <= this.totalPages) {
+            this.currentPage = page;
+        }
+    }
+
+    nextPage(): void {
+        if (this.currentPage < this.totalPages) {
+            this.currentPage++;
+        }
+    }
+
+    prevPage(): void {
+        if (this.currentPage > 1) {
+            this.currentPage--;
+        }
+    }
+
+    toggleBoleta(boletaId?: string): void {
+        if (!boletaId) return;
+        if (this.expandedBoletas.has(boletaId)) {
+            this.expandedBoletas.delete(boletaId);
+        } else {
+            this.expandedBoletas.add(boletaId);
+        }
+    }
+
     applyFilter(filter?: 'activos' | 'inactivos'): void {
         if (filter) {
             this.activeFilter = filter;
+            this.currentPage = 1; // Reset to page 1 when filter changes
         }
     }
 
@@ -572,6 +691,32 @@ export class MantenimientoComponent implements OnInit {
         const equipos = this.mantenimientos.filter(m => m.id_boleta === boletaId && m.estado === 'DEVUELTO');
         if (equipos.length > 0) {
             this.pdfService.generateMantenimientoDevolucionPDF(equipos, boletaId);
+        }
+    }
+
+    verBoletaIngreso(boletaId: string): void {
+        const equipos = this.mantenimientos.filter(m => m.id_boleta === boletaId);
+        if (equipos.length > 0) {
+            this.pdfService.generateMantenimientoBoletaPDF(equipos);
+        }
+    }
+
+    editPendingRecord(index: number): void {
+        // Si hay datos en el formulario actual, los guardamos temporalmente en la lista
+        if (this.currentRecord.nro_serie || this.currentRecord.equipo) {
+            this.pendingRecords.push({ ...this.currentRecord });
+        }
+        
+        // Cargamos el registro seleccionado para editar
+        this.currentRecord = { ...this.pendingRecords[index] };
+        
+        // Lo eliminamos de la lista de pendientes (ya que ahora está en el form principal)
+        this.pendingRecords.splice(index, 1);
+    }
+
+    removePendingRecord(index: number): void {
+        if (confirm('¿Desea eliminar este equipo de la boleta?')) {
+            this.pendingRecords.splice(index, 1);
         }
     }
 
