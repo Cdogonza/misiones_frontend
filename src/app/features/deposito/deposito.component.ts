@@ -25,6 +25,10 @@ export class DepositoComponent implements OnInit {
   depositoBaseUnit: Unidad | null = null;
   searchText = '';
   showTable = false;
+  
+  // Paginación
+  currentPage = 1;
+  pageSize = 6;
 
   // Carrito UI
   isCartModalOpen = false;
@@ -45,7 +49,7 @@ export class DepositoComponent implements OnInit {
 
   constructor(
     public auth: AuthService,
-    private dataService: DataService,
+    public dataService: DataService,
     public cartService: CartService,
     public orderEditService: OrderEditService,
     private router: Router,
@@ -76,6 +80,9 @@ export class DepositoComponent implements OnInit {
 
     this.route.queryParams.subscribe(params => {
       this.editMode = params['editMode'] === 'true' && this.orderEditService.isActive;
+      if (params['openUnits'] === 'true') {
+        this.openUnitsModal();
+      }
     });
   }
 
@@ -209,6 +216,36 @@ export class DepositoComponent implements OnInit {
     );
   }
 
+  get totalPages(): number {
+    const total = Math.ceil(this.filteredData.length / this.pageSize);
+    return total > 0 ? total : 1;
+  }
+
+  get pages(): number[] {
+    return Array.from({ length: this.totalPages }, (_, i) => i + 1);
+  }
+
+  get displayData(): Componente[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.filteredData.slice(start, start + this.pageSize);
+  }
+
+  setPage(page: number): void {
+    this.currentPage = page;
+  }
+
+  nextPage(): void {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+    }
+  }
+
+  prevPage(): void {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+    }
+  }
+
   onSearch(): void {}
 
   onVerTodos(): void {
@@ -297,6 +334,10 @@ export class DepositoComponent implements OnInit {
     this.router.navigate(['/deposito/gestion']);
   }
 
+  onVerBorradores(): void {
+    this.router.navigate(['/deposito/gestion'], { queryParams: { filter: 'borradores' } });
+  }
+
   onVolverEdicion(): void {
     this.router.navigate(['/deposito/gestion']);
   }
@@ -327,5 +368,12 @@ export class DepositoComponent implements OnInit {
 
   getAvailableStock(c: Componente): number {
     return (c.total || 0) - this.getQuantityInCart(c.codigo_componente);
+  }
+
+  get totalCartItemsCount(): number {
+    if (this.orderEditService.isActive) {
+      return this.orderEditService.totalUniqueItems;
+    }
+    return this.cartService.totalUniqueItems;
   }
 }

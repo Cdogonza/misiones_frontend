@@ -88,6 +88,17 @@ $primary-dark: #1a3a8f;
         color: $accent;
         font-weight: 700;
     }
+
+    .cart-badge {
+        margin-left: auto;
+        background: $accent;
+        color: $primary-dark;
+        font-size: 0.7rem;
+        font-weight: 800;
+        padding: 2px 7px;
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba($accent, 0.3);
+    }
 }
 
 .main-content {
@@ -251,19 +262,38 @@ $primary-dark: #1a3a8f;
         color: #10b981;
     }
 
-    &.status-delivered {
-        background: rgba(65, 246, 59, 0.2);
-        color: #41f63b;
+    &.status-delivered { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+    &.status-returned { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    &.status-rejected { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+    &.status-draft { background: rgba(156, 163, 175, 0.2); color: #d1d5db; border: 1px solid rgba(156, 163, 175, 0.3); }
+
+    &.resume-btn {
+        background: rgba($accent, 0.15) !important;
+        color: $accent !important;
+        &:hover { background: $accent !important; color: $primary-dark !important; }
     }
 
-    &.status-returned {
-        background: rgba(139, 92, 246, 0.2);
-        color: #8b5cf6;
+    &.btn-confirm-from-edit {
+        background: linear-gradient(to right, $accent, #d4a017);
+        color: $primary-dark;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s;
+        
+        &:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba($accent, 0.4);
+        }
     }
 
-    &.status-rejected {
-        background: rgba(239, 68, 68, 0.2);
-        color: #ef4444;
+    &.delete-btn {
+        &:hover {
+            color: #ef4444 !important;
+            background: rgba(239, 68, 68, 0.1) !important;
+        }
     }
 }
 
@@ -331,6 +361,8 @@ $primary-dark: #1a3a8f;
 }
 
 .modal-content {
+    transform: scale(0.85);
+    transform-origin: center;
     background: #1a2a4e;
     border: 1px solid $glass-border;
     width: 600px;
@@ -448,6 +480,34 @@ $primary-dark: #1a3a8f;
         align-items: start;
     }
 
+    .edit-warning-banner {
+        grid-column: 1 / span 2;
+        background: rgba(245, 197, 24, 0.1);
+        border: 1px solid rgba(245, 197, 24, 0.3);
+        padding: 16px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 20px;
+        animation: fadeInDown 0.5s ease;
+
+        .warning-icon {
+            font-size: 1.5rem;
+        }
+
+        p {
+            margin: 0;
+            color: #f5c518;
+            font-size: 0.9rem;
+            line-height: 1.4;
+
+            b {
+                text-decoration: underline;
+            }
+        }
+    }
+
     .edit-grid {
         display: grid;
         grid-template-columns: 1fr;
@@ -471,7 +531,7 @@ $primary-dark: #1a3a8f;
             .form-input,
             .form-select,
             .form-textarea {
-                background: rgba(0, 0, 0, 0.2);
+                background: rgba(0, 0, 0, 0.3);
                 border: 1px solid $glass-border;
                 padding: 12px;
                 border-radius: 8px;
@@ -482,6 +542,13 @@ $primary-dark: #1a3a8f;
                     outline: none;
                     border-color: $accent;
                     box-shadow: 0 0 0 2px rgba($accent, 0.2);
+                }
+            }
+
+            .form-select {
+                option {
+                    background: #1a2a4e; // Fondo oscuro para las opciones
+                    color: #fff;
                 }
             }
 
@@ -532,7 +599,8 @@ $primary-dark: #1a3a8f;
             overflow-y: auto;
             border-radius: 12px;
             background: rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            color: white;
 
             /* Estilización del scrollbar */
             &::-webkit-scrollbar {

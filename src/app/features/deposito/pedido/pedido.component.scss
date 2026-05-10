@@ -8,10 +8,19 @@ $primary-dark: #1a3a8f; // Azul Rey
 
 .pedido-container {
     display: flex;
-    min-height: 100vh;
     background: linear-gradient(135deg, $primary-dark 0%, #0d1b4a 100%);
     color: #fff;
     font-family: 'Inter', sans-serif;
+
+    // Reducción del 25% (Escala 0.75)
+    transform: scale(0.75);
+    transform-origin: top left;
+    width: 133.33vw;
+    height: 133.33vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    overflow: hidden;
 }
 
 // Sidebar (Reutilizado del dashboard principal)
@@ -102,6 +111,7 @@ $primary-dark: #1a3a8f; // Azul Rey
     display: grid;
     grid-template-columns: 1fr 350px;
     gap: 30px;
+    height: 450px; /* Altura reducida */
 }
 
 .table-card {
@@ -109,15 +119,17 @@ $primary-dark: #1a3a8f; // Azul Rey
     backdrop-filter: blur(20px);
     border: 1px solid $glass-border;
     border-radius: 20px;
-    padding: 24px;
+    padding: 18px;
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+    overflow-y: auto; /* Scroll interno para la tabla */
+    height: 100%;
 }
 
 .data-table {
     width: 100%;
     border-collapse: collapse;
     th {
-        padding: 16px;
+        padding: 12px;
         text-align: left;
         color: $accent;
         font-size: 0.85rem;
@@ -125,7 +137,7 @@ $primary-dark: #1a3a8f; // Azul Rey
         border-bottom: 2px solid rgba($accent, 0.2);
     }
     td {
-        padding: 16px;
+        padding: 12px;
         border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     }
 }
@@ -161,13 +173,13 @@ $primary-dark: #1a3a8f; // Azul Rey
     backdrop-filter: blur(20px);
     border: 1px solid $glass-border;
     border-radius: 20px;
-    padding: 30px;
+    padding: 22px;
     height: fit-content;
     position: sticky;
-    top: 40px;
+    top: 20px;
 
     .form-group {
-        margin-bottom: 24px;
+        margin-bottom: 18px;
         label { 
             display: block; margin-bottom: 10px; font-weight: 600; color: $accent; 
             .required { color: #f44336; margin-left: 4px; font-weight: bold; }
@@ -192,13 +204,40 @@ $primary-dark: #1a3a8f; // Azul Rey
         }
 
         textarea {
-            height: 100px;
+            height: 60px;
             resize: none;
         }
 
         .form-select {
             cursor: pointer;
             option { background: $primary-dark; color: #fff; }
+        }
+    }
+
+    .edit-warning-banner {
+        background: rgba(245, 197, 24, 0.1);
+        border: 1px solid rgba(245, 197, 24, 0.3);
+        padding: 12px 16px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 20px;
+        animation: fadeInDown 0.5s ease;
+
+        .warning-icon {
+            font-size: 1.2rem;
+        }
+
+        p {
+            margin: 0;
+            color: #f5c518;
+            font-size: 0.85rem;
+            line-height: 1.4;
+
+            b {
+                text-decoration: underline;
+            }
         }
     }
 
@@ -234,7 +273,6 @@ $primary-dark: #1a3a8f; // Azul Rey
 }
 
 .btn-confirm-order {
-    width: 100%;
     background: linear-gradient(to right, $accent, #d4a017);
     color: $primary-dark;
     border: none;
@@ -243,10 +281,42 @@ $primary-dark: #1a3a8f; // Azul Rey
     font-weight: 800;
     font-size: 1rem;
     cursor: pointer;
-    margin-bottom: 12px;
     transition: all 0.3s;
     &:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 20px rgba($accent, 0.4); }
     &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.btn-draft {
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 14px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+
+    &:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: $accent;
+        transform: translateY(-2px);
+    }
+    &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.action-buttons-row {
+    display: flex;
+    gap: 12px;
+    
+    button {
+        flex: 1;
+        width: auto;
+    }
 }
 
 .btn-add-more {
@@ -258,6 +328,8 @@ $primary-dark: #1a3a8f; // Azul Rey
     border-radius: 12px;
     cursor: pointer;
     font-weight: 500;
+    margin-bottom: 12px;
+    transition: 0.3s;
     &:hover { background: rgba(255, 255, 255, 0.05); }
 }
 

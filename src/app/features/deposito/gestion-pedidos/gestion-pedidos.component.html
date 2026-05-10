@@ -9,14 +9,42 @@
         </div>
 
         <nav class="nav-menu">
-            <button class="nav-item" (click)="goBack()">
+            <button class="nav-item" (click)="onInventario()">
                 <span class="icon">📦</span> Inventario
+            </button>
+            <button class="nav-item" (click)="onVerPedido()">
+                <span class="icon">🛒</span> Mi Pedido
+                @if (cartService.totalUniqueItems > 0) {
+                    <span class="cart-badge">{{ cartService.totalUniqueItems }}</span>
+                }
             </button>
             <button class="nav-item active">
                 <span class="icon">📋</span> Gestión de Pedidos
             </button>
+            <button class="nav-item" (click)="onVerBorradores()">
+                <span class="icon">💼</span> Mis Borradores
+                @if ((dataService.draftsCount$ | async) || 0 > 0) {
+                    <span class="cart-badge drafts">{{ dataService.draftsCount$ | async }}</span>
+                }
+            </button>
+            <button class="nav-item" (click)="goToRepuestos()">
+                <span class="icon">⚙️</span> Repuestos
+            </button>
+            <button class="nav-item" (click)="openUnitsModal()">
+                <span class="icon">🏢</span> Unidades
+            </button>
+            @if (orderEditService.isActive) {
+            <button class="nav-item edit-session-btn" (click)="onVolverEdicion()">
+                <span class="icon">✏️</span> Volver a la Edición
+            </button>
+            }
             <div class="nav-divider"></div>
             <p class="nav-hint">Panel de Control</p>
+            @if (auth.isJefatura()) {
+                <button class="nav-item btn-switch" (click)="goToSelector()">
+                    <span class="icon">🔀</span> Cambiar Oficina
+                </button>
+            }
         </nav>
 
         <div class="sidebar-footer">
@@ -40,6 +68,9 @@
                 <button [class.active]="activeFilter === 'inactivos'" (click)="applyFilter('inactivos')">
                     Inactivos <span>({{ countByFilter('inactivos') }})</span>
                 </button>
+                <button [class.active]="activeFilter === 'borradores'" (click)="applyFilter('borradores')">
+                    Borradores <span>({{ countByFilter('borradores') }})</span>
+                </button>
             </div>
         </header>
 
@@ -53,13 +84,22 @@
                 <button class="clear-search" (click)="searchActive = ''; applyFilter()">×</button>
                 }
             </div>
-            } @else {
+            } @else if (activeFilter === 'inactivos') {
             <div class="search-box">
                 <span class="search-icon">🔍</span>
                 <input type="text" [(ngModel)]="searchInactive" (ngModelChange)="applyFilter()"
                     placeholder="Buscar pedido inactivo por ID o Unidad..." class="search-input" />
                 @if (searchInactive) {
                 <button class="clear-search" (click)="searchInactive = ''; applyFilter()">×</button>
+                }
+            </div>
+            } @else {
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" [(ngModel)]="searchDrafts" (ngModelChange)="applyFilter()"
+                    placeholder="Buscar borrador por ID o Unidad..." class="search-input" />
+                @if (searchDrafts) {
+                <button class="clear-search" (click)="searchDrafts = ''; applyFilter()">×</button>
                 }
             </div>
             }
@@ -108,8 +148,16 @@
                                     @if (activeFilter === 'inactivos') {
                                         <button class="btn-icon" (click)="descargarPdf(pedido, 'entrega')" title="Boleta de Entrega">📄🚚</button>
                                         <button class="btn-icon" (click)="descargarPdf(pedido, 'recepcion')" title="Boleta de Recepción">📄✅</button>
+                                    } @else if (activeFilter === 'borradores') {
+                                        <button class="btn-icon resume-btn" (click)="resumeDraft(pedido)" title="Retomar Borrador">🚀</button>
+                                        <button class="btn-icon delete-btn" (click)="eliminarPedido(pedido)" title="Eliminar Borrador">🗑️</button>
                                     } @else {
                                         <button class="btn-icon" (click)="descargarPdf(pedido)" title="Descargar PDF">📄</button>
+                                    }
+
+                                    @if (pedido.estado === 'entregado') {
+                                    <button class="btn-icon status-toggle" (click)="openReturnModal(pedido)"
+                                        title="Marcar como Devuelto">✅</button>
                                     }
 
                                     @if (pedido.estado === 'pendiente') {
@@ -117,11 +165,6 @@
                                         title="Marcar como Entregado">🚚</button>
                                     <button class="btn-icon edit-btn" (click)="startEdit(pedido)"
                                         title="Editar Pedido">✏️</button>
-                                    }
-
-                                    @if (pedido.estado !== 'devuelto') {
-                                    <button class="btn-icon status-toggle" (click)="openReturnModal(pedido)"
-                                        title="Marcar como Devuelto">✅</button>
                                     }
                                 </div>
                             </td>
@@ -137,6 +180,9 @@
             }
         </div>
     </main>
+</div>
+
+<!-- Modales fuera del contenedor escalado para correcto centrado -->
 
     <!-- Modal de Detalles -->
     @if (selectedPedido) {
@@ -214,6 +260,12 @@
             </header>
 
             <div class="modal-body">
+                @if (selectedPedido?.estado === 'borrador') {
+                    <div class="edit-warning-banner">
+                        <span class="warning-icon">⚠️</span>
+                        <p><strong>Atención:</strong> Este pedido está en modo <b>Borrador</b>. Para poder confirmarlo y procesar la salida de stock, es obligatorio completar la Unidad de Destino y el rango de fechas.</p>
+                    </div>
+                }
                 <div class="edit-grid">
                     <div class="form-group">
                         <label>Unidad de Destino</label>
@@ -282,14 +334,19 @@
             <footer class="modal-footer">
                 <button class="btn-secondary" (click)="cancelEdit()">Cancelar</button>
                 <button class="btn-primary" (click)="guardarCambios()" [disabled]="loading">
-                    {{ loading ? 'Guardando...' : 'Guardar Cambios' }}
+                    {{ loading ? 'Guardando...' : (selectedPedido?.estado === 'borrador' ? 'Actualizar Borrador' : 'Guardar Cambios') }}
                 </button>
+                @if (selectedPedido?.estado === 'borrador') {
+                    <button class="btn-confirm-from-edit" (click)="guardarCambios('pendiente')" [disabled]="loading">
+                        🚀 Confirmar Pedido
+                    </button>
+                }
             </footer>
         </div>
     </div>
     }
 
-    <!-- Modal de Recepción (Devolución) -->
+    <!-- Modal de RecepciÃ³n (DevoluciÃ³n) -->
     @if (isReturning) {
     <div class="modal-backdrop" (click)="closeReturnModal()">
         <div class="modal-content" (click)="$event.stopPropagation()">
@@ -318,4 +375,3 @@
         </div>
     </div>
     }
-</div>

@@ -1,10 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { DataService } from '../../../core/services/data.service';
 import { PdfService } from '../../../core/services/pdf.service';
 import { OrderEditService } from '../../../core/services/order-edit.service';
+import { CartService } from '../../../core/services/cart.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-gestion-pedidos',
@@ -16,7 +18,7 @@ import { OrderEditService } from '../../../core/services/order-edit.service';
 export class GestionPedidosComponent implements OnInit {
   pedidos: any[] = [];
   filteredPedidos: any[] = [];
-  activeFilter: 'activos' | 'inactivos' = 'activos';
+  activeFilter: 'activos' | 'inactivos' | 'borradores' = 'activos';
   loading = false;
   selectedPedido: any = null;
   unidades: any[] = [];
@@ -25,6 +27,7 @@ export class GestionPedidosComponent implements OnInit {
   // Búsqueda
   searchActive: string = '';
   searchInactive: string = '';
+  searchDrafts: string = '';
 
   // Devolución
   isReturning = false;
@@ -42,14 +45,24 @@ export class GestionPedidosComponent implements OnInit {
   };
 
   constructor(
-    private dataService: DataService,
+    public dataService: DataService,
     private pdfService: PdfService,
     public orderEditService: OrderEditService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute,
+    public cartService: CartService,
+    public auth: AuthService
   ) { }
 
   ngOnInit(): void {
     this.loading = true;
+    
+    // Leer filtro inicial de la URL
+    const initialFilter = this.route.snapshot.queryParamMap.get('filter');
+    if (initialFilter === 'borradores' || initialFilter === 'inactivos' || initialFilter === 'activos') {
+      this.activeFilter = initialFilter as any;
+    }
+
     this.loadData();
     this.checkActiveEditSession();
   }
@@ -86,11 +99,16 @@ export class GestionPedidosComponent implements OnInit {
     });
   }
 
-  applyFilter(filter?: 'activos' | 'inactivos'): void {
+  applyFilter(filter?: 'activos' | 'inactivos' | 'borradores'): void {
     if (filter) this.activeFilter = filter;
 
     // Término de búsqueda según el filtro activo
-    const term = (this.activeFilter === 'activos' ? this.searchActive : this.searchInactive).toLowerCase();
+    let term = '';
+    if (this.activeFilter === 'activos') term = this.searchActive;
+    else if (this.activeFilter === 'inactivos') term = this.searchInactive;
+    else term = this.searchDrafts;
+    
+    term = term.toLowerCase();
 
     let baseList = [];
     if (this.activeFilter === 'activos') {
@@ -98,11 +116,14 @@ export class GestionPedidosComponent implements OnInit {
       baseList = this.pedidos.filter(p =>
         p.estado === 'pendiente' || p.estado === 'entregado'
       );
-    } else {
-      // Inactivos: Devuelto
+    } else if (this.activeFilter === 'inactivos') {
+      // Inactivos: Devuelto, Rechazado
       baseList = this.pedidos.filter(p =>
-        p.estado === 'devuelto'
+        p.estado === 'devuelto' || p.estado === 'rechazado'
       );
+    } else {
+      // Borradores
+      baseList = this.pedidos.filter(p => p.estado === 'borrador');
     }
 
     if (term) {
@@ -115,11 +136,14 @@ export class GestionPedidosComponent implements OnInit {
     }
   }
 
-  countByFilter(type: 'activos' | 'inactivos'): number {
+  countByFilter(type: 'activos' | 'inactivos' | 'borradores'): number {
     if (type === 'activos') {
       return this.pedidos.filter(p => p.estado === 'pendiente' || p.estado === 'entregado').length;
     }
-    return this.pedidos.filter(p => p.estado === 'devuelto').length;
+    if (type === 'inactivos') {
+      return this.pedidos.filter(p => p.estado === 'devuelto' || p.estado === 'rechazado').length;
+    }
+    return this.pedidos.filter(p => p.estado === 'borrador').length;
   }
 
   viewDetails(pedido: any): void {
@@ -143,6 +167,27 @@ export class GestionPedidosComponent implements OnInit {
       },
       error: (err) => console.error('Error al actualizar estado:', err)
     });
+  }
+
+  eliminarPedido(pedido: any): void {
+    if (!confirm(`¿Estás seguro de eliminar el pedido #${pedido.idpedido}? Esta acción no se puede deshacer.`)) return;
+
+    this.loading = true;
+    this.dataService.deletePedido(pedido.idpedido).subscribe({
+      next: () => {
+        alert('Pedido eliminado con éxito.');
+        this.loadData();
+      },
+      error: (err) => {
+        console.error('Error al eliminar pedido:', err);
+        alert('Hubo un error al eliminar el pedido.');
+        this.loading = false;
+      }
+    });
+  }
+
+  resumeDraft(pedido: any): void {
+    this.startEdit(pedido);
   }
 
   descargarPdf(pedido: any, type: 'entrega' | 'recepcion' = 'entrega'): void {
@@ -251,11 +296,17 @@ export class GestionPedidosComponent implements OnInit {
     this.orderEditService.clear();
   }
 
-  guardarCambios(): void {
+  guardarCambios(nuevoEstado?: string): void {
     if (!this.selectedPedido) return;
-    if (!this.editForm.codigo_unidad_destino || !this.editForm.fecha_inicio || !this.editForm.fecha_fin) {
-      alert('Por favor, complete los campos obligatorios.');
-      return;
+
+    // Si el usuario intenta confirmar (pasar a pendiente) o si ya era un pedido confirmado, exigimos campos obligatorios
+    const finalStatus = nuevoEstado || this.selectedPedido.estado;
+    
+    if (finalStatus !== 'borrador') {
+      if (!this.editForm.codigo_unidad_destino || !this.editForm.fecha_inicio || !this.editForm.fecha_fin) {
+        alert('⚠️ Campos requeridos para la confirmación:\n\nPara confirmar y procesar este pedido, es obligatorio ingresar la Unidad de Destino, la Fecha de Inicio y la Fecha de Fin.');
+        return;
+      }
     }
 
     if (this.editForm.items.length === 0) {
@@ -264,9 +315,11 @@ export class GestionPedidosComponent implements OnInit {
     }
 
     this.loading = true;
-    this.dataService.updatePedido(this.selectedPedido.idpedido, this.editForm).subscribe({
+    const dataToSave = { ...this.editForm, estado: finalStatus };
+
+    this.dataService.updatePedido(this.selectedPedido.idpedido, dataToSave).subscribe({
       next: () => {
-        alert('Pedido actualizado con éxito.');
+        alert(finalStatus === 'borrador' ? 'Borrador actualizado.' : 'Pedido confirmado y enviado con éxito.');
         this.isEditing = false;
         this.selectedPedido = null;
         this.orderEditService.clear();
@@ -284,6 +337,34 @@ export class GestionPedidosComponent implements OnInit {
     this.router.navigate(['/deposito']);
   }
 
+  onInventario(): void {
+    this.router.navigate(['/deposito']);
+  }
+
+  onVerPedido(): void {
+    this.router.navigate(['/deposito/pedido']);
+  }
+
+  onVerBorradores(): void {
+    this.applyFilter('borradores');
+  }
+
+  goToRepuestos(): void {
+    this.router.navigate(['/repuestos']);
+  }
+
+  goToSelector(): void {
+    this.router.navigate(['/selector']);
+  }
+
+  openUnitsModal(): void {
+    this.router.navigate(['/deposito'], { queryParams: { openUnits: 'true' } });
+  }
+
+  onVolverEdicion(): void {
+    this.isEditing = true;
+  }
+
   getEstadoClass(estado: string): string {
     switch (estado) {
       case 'pendiente': return 'status-pending';
@@ -291,6 +372,7 @@ export class GestionPedidosComponent implements OnInit {
       case 'entregado': return 'status-delivered';
       case 'devuelto': return 'status-returned';
       case 'rechazado': return 'status-rejected';
+      case 'borrador': return 'status-draft';
       default: return '';
     }
   }

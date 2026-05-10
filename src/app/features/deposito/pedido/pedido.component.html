@@ -9,16 +9,42 @@
         </div>
 
         <nav class="nav-menu">
-            <button class="nav-item" (click)="goBack()">
-                <span class="icon">📦</span> Depósito
+            <button class="nav-item" (click)="onInventario()">
+                <span class="icon">📦</span> Inventario
             </button>
             <button class="nav-item active">
-                <span class="icon">🛒</span> Detalle del Pedido
+                <span class="icon">🛒</span> Mi Pedido
                 @if (cartService.totalUniqueItems > 0) {
-                    <span class="cart-badge">{{ cartService.totalItemsCount }}</span>
+                    <span class="cart-badge">{{ cartService.totalUniqueItems }}</span>
                 }
             </button>
+            <button class="nav-item" (click)="onGestionarPedidos()">
+                <span class="icon">📋</span> Gestión de Pedidos
+            </button>
+            <button class="nav-item" (click)="onVerBorradores()">
+                <span class="icon">💼</span> Mis Borradores
+                @if ((dataService.draftsCount$ | async) || 0 > 0) {
+                    <span class="cart-badge drafts">{{ dataService.draftsCount$ | async }}</span>
+                }
+            </button>
+            <button class="nav-item" (click)="goToRepuestos()">
+                <span class="icon">⚙️</span> Repuestos
+            </button>
+            <button class="nav-item" (click)="openUnitsModal()">
+                <span class="icon">🏢</span> Unidades
+            </button>
+            @if (orderEditService.isActive) {
+            <button class="nav-item edit-session-btn" (click)="onVolverEdicion()">
+                <span class="icon">✏️</span> Volver a la Edición
+            </button>
+            }
             <div class="nav-divider"></div>
+            <p class="nav-hint">Panel de Control</p>
+            @if (auth.isJefatura()) {
+                <button class="nav-item btn-switch" (click)="goToSelector()">
+                    <span class="icon">🔀</span> Cambiar Oficina
+                </button>
+            }
         </nav>
 
         <div class="sidebar-footer">
@@ -79,6 +105,10 @@
                         <div class="form-card animate-fade-in">
                             <h3>Configuración del Préstamo</h3>
                             
+                            <div class="edit-warning-banner">
+                                
+                            </div>
+                            
                             <div class="config-grid">
                                 <div class="form-group">
                                     <label>Unidad Destino <span class="required">*</span></label>
@@ -107,23 +137,19 @@
                             </div>
                         </div>
 
-                        <div class="summary-info">
-                            <div class="info-row">
-                                <span>Total de unidades:</span>
-                                <strong>{{ cartService.totalItemsCount }}</strong>
-                            </div>
-                            <div class="info-row">
-                                <span>Items únicos:</span>
-                                <strong>{{ cartService.totalUniqueItems }}</strong>
-                            </div>
-                        </div>
 
-                        <button class="btn-confirm-order" (click)="confirmarPedido()" [disabled]="cartItems.length === 0 || !selectedUnidadDestino || !fechaInicio || !fechaFin">
-                            🚀 Confirmar y Enviar Pedido
-                        </button>
                         <button class="btn-add-more" (click)="goBack()">
                             ➕ Agregar más componentes
                         </button>
+                        
+                        <div class="action-buttons-row">
+                            <button class="btn-confirm-order" (click)="confirmarPedido()" [disabled]="cartItems.length === 0 || !selectedUnidadDestino || !fechaInicio || !fechaFin">
+                                🚀 Confirmar
+                            </button>
+                            <button class="btn-draft" (click)="guardarBorrador()" [disabled]="cartItems.length === 0">
+                                💾 Guardar
+                            </button>
+                        </div>
                     </div>
                 </div>
             }

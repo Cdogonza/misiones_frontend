@@ -7,13 +7,22 @@ $glass-bg: rgba(255, 255, 255, 0.08);
 $glass-border: rgba(255, 255, 255, 0.15);
 
 .page-wrapper {
-    min-height: 100vh;
+    height: 125vh;
+    width: 125vw;
+    transform: scale(0.8);
+    transform-origin: top left;
     padding: 40px 20px;
     background: linear-gradient(150deg, $primary-dark 0%, $primary 45%, #0d2266 100%);
     display: flex;
     align-items: flex-start;
     justify-content: center;
     font-family: 'Inter', sans-serif;
+    position: fixed;
+    top: 0;
+    left: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    
 }
 
 .edit-container {
@@ -27,6 +36,7 @@ $glass-border: rgba(255, 255, 255, 0.15);
     padding: 40px;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
     color: $text-light;
+
 }
 
 .edit-header {

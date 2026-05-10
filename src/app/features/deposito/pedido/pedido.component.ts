@@ -7,6 +7,7 @@ import { DataService } from '../../../core/services/data.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { CartItem, Unidad } from '../../../core/models/data.model';
 import { PdfService } from '../../../core/services/pdf.service';
+import { OrderEditService } from '../../../core/services/order-edit.service';
 @Component({
   selector: 'app-pedido',
   standalone: true,
@@ -28,10 +29,11 @@ export class PedidoComponent implements OnInit {
 
   constructor(
     public cartService: CartService,
-    private dataService: DataService,
-    private auth: AuthService,
+    public dataService: DataService,
+    public auth: AuthService,
     private router: Router,
-    private pdfService: PdfService
+    private pdfService: PdfService,
+    public orderEditService: OrderEditService
   ) {}
 
   ngOnInit(): void {
@@ -60,6 +62,37 @@ export class PedidoComponent implements OnInit {
   }
 
 
+  guardarBorrador(): void {
+    if (this.cartItems.length === 0) return;
+
+    this.loading = true;
+    const items = this.cartItems.map(item => ({
+      codigo_componente: item.componentId,
+      cantidad: item.cantidad
+    }));
+
+    const config = {
+      codigo_unidad_destino: this.selectedUnidadDestino || undefined,
+      fecha_inicio: this.fechaInicio || undefined,
+      fecha_fin: this.fechaFin || undefined,
+      estado: 'borrador'
+    };
+
+    this.dataService.createPedido(this.userId, items, this.observaciones, config).subscribe({
+      next: () => {
+        alert('Pedido guardado como borrador exitosamente.');
+        this.cartService.clearCart();
+        this.router.navigate(['/deposito']);
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('Error al guardar borrador:', err);
+        alert('Hubo un error al guardar el borrador.');
+        this.loading = false;
+      }
+    });
+  }
+
   confirmarPedido(): void {
     if (this.cartItems.length === 0) return;
 
@@ -80,7 +113,8 @@ export class PedidoComponent implements OnInit {
     const config = {
       codigo_unidad_destino: this.selectedUnidadDestino || undefined,
       fecha_inicio: this.fechaInicio || undefined,
-      fecha_fin: this.fechaFin || undefined
+      fecha_fin: this.fechaFin || undefined,
+      estado: 'pendiente'
     };
 
     this.dataService.createPedido(this.userId, items, this.observaciones, config).subscribe({
@@ -114,5 +148,33 @@ export class PedidoComponent implements OnInit {
 
   goBack(): void {
     this.router.navigate(['/deposito']);
+  }
+
+  onInventario(): void {
+    this.router.navigate(['/deposito']);
+  }
+
+  onGestionarPedidos(): void {
+    this.router.navigate(['/deposito/gestion']);
+  }
+
+  onVerBorradores(): void {
+    this.router.navigate(['/deposito/gestion'], { queryParams: { filter: 'borradores' } });
+  }
+
+  goToRepuestos(): void {
+    this.router.navigate(['/repuestos']);
+  }
+
+  goToSelector(): void {
+    this.router.navigate(['/selector']);
+  }
+
+  openUnitsModal(): void {
+    this.router.navigate(['/deposito'], { queryParams: { openUnits: 'true' } });
+  }
+
+  onVolverEdicion(): void {
+    this.router.navigate(['/deposito/gestion']);
   }
 }

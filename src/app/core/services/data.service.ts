@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, BehaviorSubject } from 'rxjs';
+import { map, tap } from 'rxjs/operators';
 import { Equipo, Componente, Unidad, UnidadAgrupada } from '../models/data.model';
 import { environment } from '../../../environments/environment';
 
@@ -14,7 +15,19 @@ export class DataService {
     private readonly PEDIDOS_API = `${environment.apiUrl}/api/pedidos`;
     private readonly HISTORIAL_API = `${environment.apiUrl}/health`;
 
-    constructor(private http: HttpClient) { }
+    private draftsCountSubject = new BehaviorSubject<number>(0);
+    public draftsCount$ = this.draftsCountSubject.asObservable();
+
+    constructor(private http: HttpClient) { 
+        this.refreshDraftsCount();
+    }
+
+    refreshDraftsCount(): void {
+        this.getAllPedidos().subscribe(pedidos => {
+            const count = pedidos.filter(p => p.estado === 'borrador').length;
+            this.draftsCountSubject.next(count);
+        });
+    }
 
     // EQUIPOS
     getEquipos(): Observable<Equipo[]> {
@@ -79,8 +92,10 @@ export class DataService {
     }
 
     // PEDIDOS
-    createPedido(idusuario: number, items: any[], observaciones: string, config?: { codigo_unidad_destino?: number, fecha_inicio?: string, fecha_fin?: string }): Observable<any> {
-        return this.http.post<any>(this.PEDIDOS_API, { idusuario, items, observaciones, ...config });
+    createPedido(idusuario: number, items: any[], observaciones: string, config?: { codigo_unidad_destino?: number, fecha_inicio?: string, fecha_fin?: string, estado?: string }): Observable<any> {
+        return this.http.post<any>(this.PEDIDOS_API, { idusuario, items, observaciones, ...config }).pipe(
+            tap(() => this.refreshDraftsCount())
+        );
     }
 
     getAllPedidos(): Observable<any[]> {
@@ -92,10 +107,20 @@ export class DataService {
     }
 
     updatePedidoEstado(idpedido: number, estado: string, observaciones_devolucion?: string): Observable<any> {
-        return this.http.patch<any>(`${this.PEDIDOS_API}/${idpedido}/estado`, { estado, observaciones_devolucion });
+        return this.http.patch<any>(`${this.PEDIDOS_API}/${idpedido}/estado`, { estado, observaciones_devolucion }).pipe(
+            tap(() => this.refreshDraftsCount())
+        );
     }
 
     updatePedido(idpedido: number, data: any): Observable<any> {
-        return this.http.patch<any>(`${this.PEDIDOS_API}/${idpedido}`, data);
+        return this.http.patch<any>(`${this.PEDIDOS_API}/${idpedido}`, data).pipe(
+            tap(() => this.refreshDraftsCount())
+        );
+    }
+
+    deletePedido(idpedido: number): Observable<any> {
+        return this.http.delete<any>(`${this.PEDIDOS_API}/${idpedido}`).pipe(
+            tap(() => this.refreshDraftsCount())
+        );
     }
 }

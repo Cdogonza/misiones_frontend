@@ -15,12 +15,18 @@
             </button>
             <button class="nav-item" (click)="onVerPedido()">
                 <span class="icon">🛒</span> Mi Pedido
-                @if (cartService.totalUniqueItems > 0) {
-                    <span class="cart-badge">{{ cartService.totalItemsCount }}</span>
+                @if (totalCartItemsCount > 0) {
+                    <span class="cart-badge">{{ totalCartItemsCount }}</span>
                 }
             </button>
             <button class="nav-item" (click)="onGestionarPedidos()">
                 <span class="icon">📋</span> Gestión de Pedidos
+            </button>
+            <button class="nav-item" (click)="onVerBorradores()">
+                <span class="icon">💼</span> Mis Borradores
+                @if ((dataService.draftsCount$ | async) || 0 > 0) {
+                    <span class="cart-badge drafts">{{ dataService.draftsCount$ | async }}</span>
+                }
             </button>
             <button class="nav-item btn-repuestos" (click)="goToRepuestos()">
                 <span class="icon">⚙️</span> Repuestos
@@ -93,7 +99,7 @@
                     }
                 </div>
                 <div class="toolbar-search">
-                    <input type="text" [(ngModel)]="searchText" (keyup.enter)="onSearch()"
+                    <input type="text" [(ngModel)]="searchText" (ngModelChange)="currentPage = 1" (keyup.enter)="onSearch()"
                         placeholder="Filtrar por componente, serie o equipo..." class="tool-search-input" />
                     <button class="btn-search-icon" (click)="onSearch()">🔍</button>
                 </div>
@@ -117,7 +123,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @for (c of filteredData; track c.codigo_componente) {
+                        @for (c of displayData; track c.codigo_componente) {
                         <tr>
                             <td>{{ c.codigo_componente }}</td>
                             <td class="comp-cell">{{ c.componente }}</td>
@@ -147,6 +153,31 @@
                         }
                     </tbody>
                 </table>
+
+                <!-- PAGINATION CONTROLS -->
+                <div class="pagination-container">
+                    <div class="pagination-info">
+                        Mostrando página <strong>{{ currentPage }}</strong> de {{ totalPages }}
+                    </div>
+                    <div class="pagination-actions">
+                        <button class="btn-page" [disabled]="currentPage === 1" (click)="prevPage()">
+                            Anterior
+                        </button>
+                        
+                        <div class="page-numbers">
+                            <button *ngFor="let p of pages" 
+                                    class="btn-number" 
+                                    [class.active]="p === currentPage"
+                                    (click)="setPage(p)">
+                                {{ p }}
+                            </button>
+                        </div>
+
+                        <button class="btn-page" [disabled]="currentPage === totalPages" (click)="nextPage()">
+                            Siguiente
+                        </button>
+                    </div>
+                </div>
             </div>
             } @else {
             <div class="empty-state-card animate-fade-in">

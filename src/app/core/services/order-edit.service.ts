@@ -72,4 +72,9 @@ export class OrderEditService {
   get isActive(): boolean {
     return this.isEditing.value;
   }
+
+  get totalUniqueItems(): number {
+    const currentForm = this.editForm.value;
+    return currentForm?.items?.length || 0;
+  }
 }
